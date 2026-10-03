@@ -1,0 +1,16 @@
+[run]
+source = omegaforge
+parallel = True
+# 实测教训：单写 multiprocessing 会**丢掉线程里的执行**。
+# server.py 的 Handler 跑在 ThreadingHTTPServer 的请求线程里，只设
+# multiprocessing 时报告 11%（523/585 未覆盖），而探针证实 _do_get 真的
+# 执行了 4 次 —— 那是采集假象，不是真盲区。必须 thread 与 multiprocessing
+# 并列（前者追请求线程与 xdist 子进程内的线程，后者追 subprocess 子进程）。
+concurrency = thread,multiprocessing
+omit =
+    */tests/*
+    */probes/*
+
+[report]
+show_missing = True
+skip_covered = False

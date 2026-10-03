@@ -1,0 +1,241 @@
+/* ============================================================
+ * OmegaForge Design Tokens —— 自动生成，请勿手改
+ * 源文件: design/tokens.json  生成脚本: design/build_tokens.py
+ * 颜色模型: OKLCH（感知均匀）。通道三元组存储，支持 oklch(var(--x)/α) 合成
+ * 三层: primitive -> semantic -> component（单向依赖）
+ * ============================================================ */
+
+/* ---------- L1 primitive：原始值，不可变 ---------- */
+:root {
+  --of-surface-0: 0.1450 0.0136 264.10;
+  --of-surface-1: 0.1900 0.0155 264.10;
+  --of-surface-2: 0.2300 0.0172 264.10;
+  --of-surface-3: 0.2700 0.0185 264.10;
+  --of-surface-4: 0.3150 0.0195 264.10;
+  --of-surface-5: 0.3700 0.0200 264.10;
+  --of-surface-6: 0.4300 0.0195 264.10;
+  --of-surface-7: 0.5100 0.0175 264.10;
+  --of-surface-8: 0.6300 0.0145 264.10;
+  --of-surface-9: 0.7500 0.0115 264.10;
+  --of-surface-10: 0.8650 0.0085 264.10;
+  --of-surface-11: 0.9400 0.0055 264.10;
+  --of-surface-12: 0.9850 0.0030 264.10;
+  --of-brand-50: 0.9700 0.0020 286.20;
+  --of-brand-100: 0.9300 0.0090 286.20;
+  --of-brand-200: 0.8700 0.0316 286.20;
+  --of-brand-300: 0.8000 0.0750 286.20;
+  --of-brand-400: 0.7200 0.1386 286.20;
+  --of-brand-500: 0.6450 0.1969 286.20;
+  --of-brand-600: 0.5990 0.2299 286.20;
+  --of-brand-700: 0.5450 0.2546 286.20;
+  --of-brand-800: 0.4800 0.2467 286.20;
+  --of-brand-900: 0.4100 0.1826 286.20;
+  --of-brand-950: 0.3400 0.1243 286.20;
+  --of-success-50: 0.9700 0.0069 162.59;
+  --of-success-100: 0.9300 0.0341 162.59;
+  --of-success-200: 0.8700 0.1118 162.59;
+  --of-success-300: 0.8100 0.1388 162.59;
+  --of-success-400: 0.7400 0.1458 162.59;
+  --of-success-500: 0.6800 0.1413 162.59;
+  --of-success-600: 0.6200 0.1288 162.59;
+  --of-success-700: 0.5500 0.1107 162.59;
+  --of-success-800: 0.4700 0.0866 162.59;
+  --of-success-900: 0.3900 0.0618 162.59;
+  --of-success-950: 0.3100 0.0398 162.59;
+  --of-warning-50: 0.9700 0.0043 75.04;
+  --of-warning-100: 0.9300 0.0204 75.04;
+  --of-warning-200: 0.8700 0.0719 75.04;
+  --of-warning-300: 0.8100 0.1408 75.04;
+  --of-warning-400: 0.7500 0.1480 75.04;
+  --of-warning-500: 0.6900 0.1405 75.04;
+  --of-warning-600: 0.6300 0.1283 75.04;
+  --of-warning-700: 0.5600 0.1105 75.04;
+  --of-warning-800: 0.4800 0.0858 75.04;
+  --of-warning-900: 0.4000 0.0615 75.04;
+  --of-warning-950: 0.3200 0.0399 75.04;
+  --of-danger-50: 0.9700 0.0020 14.99;
+  --of-danger-100: 0.9300 0.0099 14.99;
+  --of-danger-200: 0.8700 0.0373 14.99;
+  --of-danger-300: 0.8100 0.0814 14.99;
+  --of-danger-400: 0.7400 0.1422 14.99;
+  --of-danger-500: 0.6800 0.2001 14.99;
+  --of-danger-600: 0.6200 0.2344 14.99;
+  --of-danger-700: 0.5500 0.2014 14.99;
+  --of-danger-800: 0.4700 0.1573 14.99;
+  --of-danger-900: 0.3900 0.1121 14.99;
+  --of-danger-950: 0.3100 0.0720 14.99;
+  --of-white: 1.0000 0.0000 0.00;
+  --of-black: 0.0000 0.0000 0.00;
+}
+:root {
+  --of-space-0: 0px;
+  --of-space-px: 1px;
+  --of-space-0_5: 2px;
+  --of-space-1: 4px;
+  --of-space-1_5: 6px;
+  --of-space-2: 8px;
+  --of-space-2_5: 10px;
+  --of-space-3: 12px;
+  --of-space-3_5: 14px;
+  --of-space-4: 16px;
+  --of-space-5: 20px;
+  --of-space-6: 24px;
+  --of-space-7: 28px;
+  --of-space-8: 32px;
+  --of-space-10: 40px;
+  --of-space-12: 48px;
+  --of-space-16: 64px;
+}
+:root {
+  --of-radius: 0.625rem;
+}
+:root {
+  --of-fontSize-2xs: 1px;
+  --of-fontSize-xs: 1px;
+  --of-fontSize-sm: 1px;
+  --of-fontSize-base: 1px;
+  --of-fontSize-md: 1px;
+  --of-fontSize-lg: 1px;
+  --of-fontSize-xl: 2px;
+  --of-fontSize-2xl: 2px;
+  --of-fontSize-3xl: 3px;
+  --of-fontSize-4xl: 3px;
+}
+:root {
+  --of-lineHeight-tight: 1.2;
+  --of-lineHeight-snug: 1.4;
+  --of-lineHeight-normal: 1.6;
+  --of-lineHeight-relaxed: 1.75;
+}
+:root {
+  --of-duration-instant: 80ms;
+  --of-duration-fast: 120ms;
+  --of-duration-base: 200ms;
+  --of-duration-slow: 300ms;
+  --of-duration-slower: 500ms;
+}
+:root {
+  --of-easing-standard: cubic-bezier(.2,0,0,1);
+  --of-easing-decelerate: cubic-bezier(.16,1,.3,1);
+  --of-easing-accelerate: cubic-bezier(.4,0,1,1);
+}
+:root {
+  --of-z-base: 0;
+  --of-z-raised: 10;
+  --of-z-dropdown: 100;
+  --of-z-overlay: 200;
+  --of-z-modal: 300;
+  --of-z-popover: 400;
+  --of-z-toast: 500;
+}
+
+/* ---------- L2 semantic：深色（Dark Ops 默认）---------- */
+:root, [data-theme="dark"] {
+  --background: var(--of-surface-0);
+  --foreground: var(--of-surface-12);
+  --card: var(--of-surface-1);
+  --card-foreground: var(--of-surface-12);
+  --popover: var(--of-surface-2);
+  --popover-foreground: var(--of-surface-12);
+  --primary: var(--of-brand-700);
+  --primary-foreground: var(--of-white);
+  --primary-emphasis: var(--of-brand-600);
+  --secondary: var(--of-surface-2);
+  --secondary-foreground: var(--of-surface-11);
+  --muted: var(--of-surface-2);
+  --muted-foreground: var(--of-surface-8);
+  --accent: var(--of-surface-3);
+  --accent-foreground: var(--of-surface-11);
+  --destructive: var(--of-danger-700);
+  --destructive-foreground: var(--of-white);
+  --success: var(--of-success-700);
+  --success-foreground: var(--of-white);
+  --warning: var(--of-warning-600);
+  --warning-foreground: var(--of-black);
+  --border: var(--of-surface-2);
+  --input: var(--of-surface-3);
+  --ring: var(--of-brand-500);
+  --verdict-win: var(--of-success-600);
+  --verdict-tie: var(--of-warning-600);
+  --verdict-loss: var(--of-danger-600);
+  --gene-persona: var(--of-brand-600);
+  --gene-tool: var(--of-success-600);
+  --gene-workflow: var(--of-brand-400);
+  --gene-upgrade: var(--of-warning-500);
+  --phase-active: var(--of-brand-500);
+  --phase-done: var(--of-success-600);
+  --phase-pending: var(--of-surface-6);
+  --log-bg: var(--of-surface-0);
+  --log-fg: var(--of-surface-9);
+  --budget-ok: var(--of-success-600);
+  --budget-warn: var(--of-warning-500);
+  --budget-over: var(--of-danger-600);
+}
+
+/* ---------- L2 semantic：浅色 ---------- */
+[data-theme="light"] {
+  --background: var(--of-surface-12);
+  --foreground: var(--of-surface-1);
+  --card: var(--of-white);
+  --card-foreground: var(--of-surface-1);
+  --popover: var(--of-white);
+  --popover-foreground: var(--of-surface-1);
+  --primary: var(--of-brand-700);
+  --primary-foreground: var(--of-white);
+  --primary-emphasis: var(--of-brand-600);
+  --secondary: var(--of-surface-11);
+  --secondary-foreground: var(--of-surface-2);
+  --muted: var(--of-surface-11);
+  --muted-foreground: var(--of-surface-6);
+  --accent: var(--of-surface-11);
+  --accent-foreground: var(--of-surface-2);
+  --destructive: var(--of-danger-700);
+  --destructive-foreground: var(--of-white);
+  --success: var(--of-success-700);
+  --success-foreground: var(--of-white);
+  --warning: var(--of-warning-700);
+  --warning-foreground: var(--of-white);
+  --border: var(--of-surface-10);
+  --input: var(--of-surface-10);
+  --ring: var(--of-brand-600);
+  --verdict-win: var(--of-success-700);
+  --verdict-tie: var(--of-warning-700);
+  --verdict-loss: var(--of-danger-700);
+  --gene-persona: var(--of-brand-600);
+  --gene-tool: var(--of-success-600);
+  --gene-workflow: var(--of-brand-400);
+  --gene-upgrade: var(--of-warning-500);
+  --phase-active: var(--of-brand-500);
+  --phase-done: var(--of-success-600);
+  --phase-pending: var(--of-surface-6);
+  --log-bg: var(--of-surface-0);
+  --log-fg: var(--of-surface-9);
+  --budget-ok: var(--of-success-600);
+  --budget-warn: var(--of-warning-500);
+  --budget-over: var(--of-danger-600);
+}
+
+/* ---------- 派生：圆角（从单一 --of-radius 派生）---------- */
+:root {
+  --radius-sm: calc(var(--of-radius) - 4px);
+  --radius-md: calc(var(--of-radius) - 2px);
+  --radius-lg: var(--of-radius);
+  --radius-xl: calc(var(--of-radius) + 4px);
+  --radius-full: 9999px;
+}
+
+/* ---------- 派生：阴影（深色模式需内高光，纯黑阴影在深底不可见）---------- */
+:root, [data-theme="dark"] {
+  --shadow-sm: 0 1px 0 oklch(var(--of-white) / .04) inset, 0 2px 8px oklch(0 0 0 / .35);
+  --shadow-md: 0 1px 0 oklch(var(--of-white) / .05) inset, 0 8px 28px oklch(0 0 0 / .45);
+  --shadow-lg: 0 1px 0 oklch(var(--of-white) / .06) inset, 0 16px 48px oklch(0 0 0 / .55);
+  --shadow-glow: 0 4px 24px oklch(var(--of-brand-600) / .35);
+  --ring-focus: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+}
+[data-theme="light"] {
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / .06);
+  --shadow-md: 0 4px 16px oklch(0 0 0 / .08);
+  --shadow-lg: 0 12px 32px oklch(0 0 0 / .12);
+  --shadow-glow: 0 4px 20px oklch(var(--of-brand-600) / .22);
+  --ring-focus: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+}

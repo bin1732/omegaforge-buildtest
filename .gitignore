@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+
+# Node / Electron
+node_modules/
+desktop/out/
+
+# OmegaForge job outputs
+output/
+.omegaforge/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# 大文件不入库（走 Release 资产）
+models/
+*.onnx
+*.tar.bz2
+sherpa-onnx-streaming*/
+
+# CI 诊断产物（失败时经 artifact 上传，不入库）
+ci_diag/
+
+# Tauri 构建产物（平台相关二进制，禁止入库 —— 否则会污染其他平台 CI）
+src-tauri/binaries/
+src-tauri/_internal/
+src-tauri/target/
+
+# 测试缓存 / 运行日志（开发产物，不进发行包）
+.pytest_cache/
+*.log
+.omegaforge/logs/
+.coverage
+htmlcov/
+
+# 一次性排查脚本（根目录禁止堆积临时 .py）
+/audit.py
+/repro_*.py
+/push_changes.py
+
+# 测试运行产生的状态目录（非源码）
+.omegaforge_test_*/
+
+# 沙盒环境专用：覆盖全局 npm 配置（避免依赖被装进全局 node_modules）
+.npmrc
+
+# 凭据类文件：绝不允许入库（含令牌/密钥）
+.github_token
+.latest_sha
+*.token
+probes/.cov/
+
+# 本地测试运行时（沙盒 /tmp 会被回收，故落在工作区）
+.pylibs/
+
+# 回退校验脚本的注入备份与锁
+.revtmp/
+
+# 本地 Python 依赖目录（沙盒 pip install 目标），不进版本库
+.pylibs/
+
+# 注入备份（回退校验脚本产生，绝不进版本库）
+*.bak
