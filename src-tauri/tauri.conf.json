@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "OmegaForge Studio",
+  "version": "0.1.0",
+  "identifier": "ai.omegaforge.studio",
+  "build": {
+    "beforeDevCommand": "npm --prefix frontend run dev",
+    "beforeBuildCommand": "",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../frontend/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "OmegaForge Studio · 万象工坊",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 640,
+        "resizable": true,
+        "decorations": true,
+        "transparent": false,
+        "backgroundColor": "#070A10"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:* http://localhost:*; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'"
+    },
+    "withGlobalTauri": false
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.icns", "icons/icon.ico"],
+    "copyright": "Copyright © 2026 灵感引擎工坊",
+    "category": "DeveloperTool",
+    "shortDescription": "把源 Agent 的能力提炼成更强、更省的可运行蒸馏体",
+    "longDescription": "OmegaForge Studio：源 Agent 蒸馏、竞技场裁决、基因组解剖、提示词编译。",
+    "windows": {
+      "nsis": {
+        "languages": ["SimpChinese"],
+        "displayLanguageSelector": true,
+        "installMode": "currentUser",
+        "installerHooks": "./windows/hooks.nsh"
+      }
+    },
+    "externalBin": ["binaries/omegaforge-backend"],
+    "resources": ["./_internal/"]
+  }
+}

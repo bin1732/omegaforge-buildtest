@@ -1,0 +1,681 @@
+name: Build OmegaForge Studio
+
+on:
+  workflow_dispatch:
+  push:
+    # 实测：本仓库默认分支为 master，若只写 main 则推送后不会触发构建
+    branches: [master, main]
+
+permissions:
+  contents: write
+  issues: write
+
+# 并发控制：同一分支只保留最新一次构建。
+# 实测教训：连续推送 9 个 commit 触发了 9 个并发构建，每个都要编译
+# 448 个 Rust crate，私有仓库 2000 分钟/月的额度会被瞬间吃穿。
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      # Windows runner 实测（run104 真实失败）：Python 默认 stdout 编码是
+      # cp1252，任何脚本 print 中文都会抛 UnicodeEncodeError。全局强制 UTF-8，
+      # 覆盖 pytest / 各 check_* 与 ci_* 脚本，避免逐个补丁。
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      # 诊断目录必须是最早的步骤，排在任何会往 ci_diag 落日志的步骤之前。
+      # 实测教训（run79/run80）：语音运行库步骤排在它前面，tee 写
+      # ci_diag/00b-voice-lib.log 时目录还不存在；bash 下 tee 自建目录失败，
+      # 叠加 set -o pipefail 使整步判失败，而真正的 pip 安装其实是成功的。
+      # 症状是"装不上运行库"，根因却是步骤顺序——排查方向完全相反。
+      # 后续每一步都依赖这个目录，故紧贴 checkout 之后建立。
+      - name: Prepare diagnostics dir
+        shell: bash
+        run: |
+          mkdir -p ci_diag
+          echo "runner: $(uname -a)" > ci_diag/00-env.txt
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+
+      # 语音运行库：必须在此安装，才能被 PyInstaller 打进 _internal。
+      # 不装的话产物里没有 sherpa_onnx，装机后 status 报 lib_installed=false，
+      # 而用户拿到的是"装完没有语音"的安装包——构建却全程是绿的。
+      - name: Install voice runtime
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m pip install --upgrade sherpa-onnx 2>&1 | tee ci_diag/00b-voice-lib.log
+          python -c "import sherpa_onnx; print('sherpa_onnx', sherpa_onnx.__file__)"
+
+      # 顺序约束由 scripts/check_ci_diag_order.py 守护：任何往 ci_diag/ 落
+      # 日志的步骤都必须排在建立目录的步骤之后。此处不再重复建目录，避免
+      # "两处都能建"掩盖掉顺序被改动的事实。
+      #
+      # 架构守卫：分层依赖方向是可执行契约，不是文档。
+      # 放在打包之前 —— 违规直接阻断，避免"能打包但架构已腐化"。
+      # tauri 的 npm 包与 crate 次版本不一致会让打包被中止。放在编译之前：
+      # 这一处失败不涉及任何代码错误，等五分钟编译再报出来纯属浪费。
+      - name: Tauri version parity (gate before compile)
+        shell: bash
+        run: python scripts/check_tauri_version_parity.py
+
+      - name: Architecture + regression guard
+        shell: bash
+        # 本步实测在 Windows runner 上挂满 6 小时被 job 超时取消（run 36451764645）
+        # ——日志停在 75%，其后某个用例不返回。挂起与失败在 Actions 上都表现为
+        # "这一步没出结果"，但失败有诊断、挂起只有一次 cancelled。
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          python -m pip install -q pytest
+          # pyyaml 缺失时，回传分支守卫跳到"按原文判"的退路：真实工作流会被
+          # 判成"无法定位步骤"，而本地装了 pyyaml 永远复现不了。缺依赖必须
+          # 补，不能靠退路——退路只为"解析失败"保留，不是为"没装依赖"准备。
+          python -m pip install -q pyyaml
+          # 用例挂起必须有上限：本地装了 pytest-timeout，runner 上不装，于是
+          # "本地跑得完"掩盖了"CI 上会挂"。两条同时给：插件负责打断单个用例，
+          # timeout-minutes 负责兜住整步。
+          python -m pip install -q pytest-timeout
+          # 打包产物守卫需要 build 与 setuptools>=61：
+          #   - 缺 build，真实构建校验会跳过，空壳包无从发现
+          #   - setuptools 低于 61 不读 [project] 表，产物退化为 UNKNOWN
+          #     空壳 wheel，装完 omegaforge 命令根本不存在
+          # runner 预装的 setuptools 版本不保证，这里显式升到位。
+          python -m pip install -q build
+          python -m pip install -q --upgrade "setuptools>=61"
+          # 逐页像素校验依赖 Pillow。runner 上不装的话，相关用例以
+          # ModuleNotFoundError 失败——表现是"功能坏了"，而实际是缺依赖；
+          # 反过来若改成缺依赖就跳过，这条校验会在 CI 上永久静默失效。
+          python -m pip install -q pillow
+          python -c "import setuptools;print('setuptools',setuptools.__version__)" 2>&1 | tee ci_diag/00-setuptools.txt
+          # 架构契约（分层依赖方向）+ 全量回归，任一失败即阻断打包。
+          # 全量在本地实测约 5 分钟（1100 余项），runner 上给 600 秒上限。
+          # -p no:cacheprovider 之外还需 --timeout：只靠外层 timeout-minutes
+          # 会在整步被杀时拿不到任何失败项，无从定位是哪个用例。
+          python -m pytest tests/ -q --timeout=120 2>&1 | tee ci_diag/00-architecture.log
+          echo "date: $(date -u)" >> ci_diag/00-env.txt
+
+      # 表层守卫：后端真实字段必须有中文标签。
+      # 契约来自后端 dataclass 实测字段，不是手写清单——
+      # 后端加字段而前端没补翻译，这里直接阻断。
+      # 自定义 runner 套件：pytest 只收集 tests/ 下的用例文件，这几个是自带
+      # __main__ 的独立套件，不会被收集，因此也不会出现在"CI 绿"里。逐个跑
+      # 而非一条命令，失败时能立刻看出是哪个套件。
+      # 清单与实际文件必须一致：套件改名后，写死的清单会让这一步去跑一个不
+      # 存在的文件，报错看着像"套件失败"，排查方向完全不对；而真改名时若只
+      # 删清单条目，套件会静默少跑，与"跑过且通过"在汇总上无法区分。
+      - name: Custom runner suites (not collected by pytest)
+        shell: bash
+        run: |
+          set -o pipefail
+          fail=0
+          ran=0
+          for t in _legacy_all_features _legacy_chat_suite _legacy_product_suite \
+                   test_arena_fairness test_run_store test_api_live test_pipeline; do
+            echo "===== $t ====="
+            if [ ! -f "tests/$t.py" ]; then
+              echo "FAIL: 声明的套件 tests/$t.py 不存在——清单与实际文件不符"
+              fail=1
+              continue
+            fi
+            ran=$((ran + 1))
+            if python "tests/$t.py" 2>&1 | tee "ci_diag/00-suite-$t.log"; then
+              echo "PASS: $t"
+            else
+              echo "FAIL: $t"; fail=1
+            fi
+          done
+          if [ "$ran" -eq 0 ]; then
+            echo "FAIL: 一个套件都没跑到"
+            fail=1
+          fi
+          exit $fail
+
+      # `cmd | tee log` 的退出码取自管道最后一段（tee），恒为 0：脚本失败
+      # 了这一步照样绿。实测证据见 logs/run4-00-architecture.log——日志里
+      # 有 F 与 E，而该步骤从未失败过。故凡用 tee 的步骤都要 pipefail。
+      - name: Surface guard (field label coverage)
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/check_labels.py 2>&1 | tee ci_diag/00-surface-labels.log
+
+      # 表层守卫第二道：上面只查 4 个 dataclass，实测仅覆盖 35 个字段。
+      # 但用户看到的是 36 个端点的响应——本步骤真实启动后端、逐个打端点、
+      # 递归抽取每一个响应键（实测 51 个，其中 44 个此前无中文标签）。
+      # 不真实启动就无法覆盖动态构造的 dict，这是它与上一道守卫的分工。
+      - name: Surface guard (all API endpoint keys)
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/check_api_labels.py 2>&1 | tee ci_diag/00-surface-api-labels.log
+
+      # 管道落盘的退出码保护一旦被删，CI 会在被观测命令失败时仍报绿。
+      # 把它作为一步常驻：删保护与删守卫只可能同时发生，不会只发生后一件。
+      - name: CI pipe exit-code guard
+        shell: bash
+        run: python scripts/check_ci_pipes.py
+
+      # 诊断目录顺序守卫：任何往 ci_diag/ 落日志的步骤都必须排在建立目录之后。
+      # 实测教训（run79/run80）：语音运行库步骤排在建目录之前，tee 写文件时
+      # 目录不存在，叠加 pipefail 使整步判失败 —— 报的是"装不上运行库"，
+      # 根因是步骤顺序，排查方向相反，且后续 30 余步全部 skipped。
+      - name: CI diagnostics dir order guard
+        shell: bash
+        run: python scripts/check_ci_diag_order.py
+
+      # 表层残留守卫：用户能看见的地方不许有开发痕迹。
+      # 与上面"字段翻译"互补——那条管键名，这条管调试输出/TODO/占位假文。
+      - name: API wiring guard (no dead front-end entry)
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/check_api_wiring.py
+
+      - name: Surface residue guard (no dev traces)
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/check_residue.py frontend/src 2>&1 | tee ci_diag/00-surface-residue.log
+
+      # 验收脚本起跑守卫：ci_verify_* 只在 Windows 装机实例上执行，本地跑不到。
+      # 引用了不存在的成员时本地全绿，只在 runner 上一上来就 ImportError 崩掉，
+      # 表现为"某个验收步骤失败"，排查方向会被带到产品问题上去。历史上卸载
+      # 验收因此从未真正跑过一轮。放在打包之前：越早知道越省一轮构建。
+      - name: Verify scripts must start (import + member existence)
+        shell: bash
+        run: python scripts/check_verify_scripts.py
+
+      # 装机体积上报步骤的行为校验：直接把该步骤的 run 脚本用
+      # bash -eo pipefail 真跑两遍。盯文本守不住它——脚本里任一管道非 0
+      # 都会在到达末尾的 exit 0 之前中止，使该行成为死代码，步骤判失败而
+      # 报出来的是采集脚本自己；目录缺失时若照打 installed_files=0，读日志
+      # 的人会当成"装完是空的"，方向相反。
+      - name: Installed footprint step behavior guard
+        shell: bash
+        run: python scripts/check_footprint_step.py
+
+      # 旅程夹具导出校验：夹具变量不带 export 时只存在于当前 shell，
+      # 子进程（node）读不到，报的是"请先运行夹具脚本"，与夹具没生成同形。
+      # 真跑一遍生成 + 子进程读取才能验到。
+      - name: Journey fixtures export guard
+        shell: bash
+        run: python scripts/check_journey_fixture_export.py
+
+      # ---- 1. 打包 Python 后端为 Tauri sidecar ----
+      - name: Build Python sidecar
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/build_sidecar.py 2>&1 | tee ci_diag/01-sidecar-build.log
+        continue-on-error: false
+
+      # 成败关键：externalBin 只带单个 exe，_internal 必须独立存在且被 resources 携带
+      - name: Verify sidecar artifacts (gate)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "== binaries =="
+          ls -la src-tauri/binaries/
+          echo "== _internal =="
+          if [ ! -d "src-tauri/_internal" ]; then
+            echo "::error::src-tauri/_internal 缺失 —— sidecar 启动会报 Failed to load Python shared library"
+            exit 1
+          fi
+          ls src-tauri/_internal | head -20
+          echo "_internal 条目数: $(ls src-tauri/_internal | wc -l)"
+
+      # 语音内置守卫：需求契约 / 下载清单 / 打包产物三处必须对得上。
+      # 没有这一步时，三种漂移（清单缺文件、模型没带、产物是占位）都会以
+      # "装完了却用不了"的形式留给用户，而每一处单独看都没有错。
+      - name: Verify voice bundle (gate)
+        shell: bash
+        run: python scripts/check_voice_bundle.py src-tauri/_internal
+
+      # TTS 主模型文件名单一定义：下载清单 / 运行时需求 / 引擎加载三处各写
+      # 一份时，换用体积更小的量化版只改一处，会让下载与加载指向不同文件，
+      # 症状是"下载成功、界面仍显示未安装"，而两侧代码单独看都没错。
+      - name: TTS model filename single source guard
+        shell: bash
+        run: python scripts/check_tts_model_single_source.py
+
+      # TTS 主模型换版后的迁移行为：用户目录里残留的旧版主文件不得被判为
+      # "有这个模型"——否则随包内置的新版那份会被跳过，界面显示未安装，
+      # 用户明明装过却要重下一次。
+      - name: TTS model migration behavior guard
+        shell: bash
+        run: python scripts/check_tts_migration.py
+
+      # 真实性校验：sidecar 必须真的能跑起来并监听端口，而不是只打出一个 exe。
+      #
+      # 实测教训（勿退回旧写法）：此前用 bash /dev/tcp 探测，该特性在 Windows
+      # 的 Git Bash(MSYS2) 上行为不确定，会把"探测方式失效"误报成"产品启动失败"。
+      # 现改用 scripts/ci_smoke_sidecar.py（Python socket，跨平台一致）。
+      - name: Smoke test sidecar (real boot)
+        shell: bash
+        env:
+          OF_PORT: '8791'
+          OF_SMOKE_TIMEOUT: '60'
+        run: |
+          # 实测教训（勿退回旧写法）：此处原本 rm -rf ci_diag，会把架构守卫与
+          # 表层守卫刚落盘的日志一并删掉。run104 之所以还能拿到日志，纯粹因为
+          # 表层守卫先失败、本步骤被跳过——即"失败才幸存"。改为只确保存在。
+          mkdir -p ci_diag
+          python scripts/ci_smoke_sidecar.py
+
+      - name: Install frontend deps
+        working-directory: frontend
+        # 依赖变更后 package-lock 未同步，npm ci 会直接失败；
+        # 用 npm install 让 runner 重新解析并写回 lock。
+        run: npm install --no-audit --no-fund
+
+      - name: Build frontend
+        working-directory: frontend
+        # 显式 bash：本步未声明 shell 时 Windows runner 走默认 pwsh，那里的
+        # `2>&1 | tee` 语义与 bash 不同，与其余步骤的日志落盘方式不一致。
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee ../ci_diag/02-frontend-build.log
+
+      # ---- 人类用户旅程：像人一样在界面上操作 ----
+      #
+      # 为什么必须有这一步：接口级验收全绿，也会出现"用户点完成，条目消失
+      # 且再也找不回来"这类问题——列表接口有数据、统计字段正确、完成接口
+      # 返回成功，只有真的在界面上点一遍才会发现。
+      # 这一步跑在真实构建产物上，不是源码目录。
+      - name: Human user journey (real UI, real clicks)
+        shell: bash
+        env:
+          OF_JOURNEY_FIXTURE_ROOT: ${{ github.workspace }}/ci_diag/journey
+        run: |
+          set -o pipefail
+          mkdir -p ci_diag
+          npm install --no-save playwright@1.49.1 2>&1 | tail -3
+          npx playwright install chromium 2>&1 | tail -5
+          bash scripts/run_user_journey.sh 2>&1 | tee ci_diag/02b-user-journey.log
+          exit ${PIPESTATUS[0]}
+
+      # ---- 深度人类旅程：核心流水线五个页面 ----
+      #
+      # 与上面那段的区别：那段覆盖增/删/改，这段覆盖"完整跑一遍流水线"——
+      # 蒸馏、基因组、竞技场、运行记录、用量。这几个页面此前只在接口与
+      # 管道层验过，界面上一次都没被点过。
+      # 必须跑两次蒸馏：只跑一次验不出"产物与输入无关"，
+      # 而用户拿到的是两个分不清谁是谁的蒸馏体。
+      # ---- 逐页像素校验：页面"能打开"不等于"画出来了" ----
+      # 沙盒浏览器驱动不可下载（CDN 被拦），这层只能在 runner 上跑。
+      # 复用上一步已装好的 playwright 与 chromium。
+      - name: Pixel render check (all ten pages)
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p ci_diag
+          python3 scripts/verify_pixels_per_page.py \
+            --dist frontend/dist --shots ci_diag/shots 2>&1 \
+            | tee ci_diag/02d-pixels.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Deep user journey (pipeline pages, two real runs)
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p ci_diag
+          bash scripts/run_user_journey_deep.sh 2>&1 | tee ci_diag/02c-user-journey-deep.log
+          exit ${PIPESTATUS[0]}
+
+      # 实测教训：GitHub 把 job 日志托管在 Azure Blob，对沙盒脚本 403
+      # 不可下载；diagnostics issue 又依赖 secret 是否注入。
+      # 于是构建失败时既无日志也无 issue，只能盲修。
+      # 这里把 ci_diag 整体作为产物上传，保证任何失败都能取到真实输出。
+      - name: Upload CI diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-diag
+          path: ci_diag/**
+          if-no-files-found: warn
+
+      # ---- 2. 先单独编译 Rust：目的就是把编译错误变成可读日志 ----
+      #
+      # 为什么多这一步（实测教训）：tauri-action 的编译输出只进 Actions UI，
+      # 而 GitHub 把日志托管在 Azure Blob，对沙盒脚本不可下载（403 policy_default_denied），
+      # 导致此前 8 次 Build Tauri 失败全部零日志、只能猜。这里单独跑一次
+      # cargo build 并 tee 落盘，任何 Rust 编译错误都能被诊断回传带出来。
+      # 与下一步 tauri-action 共用 src-tauri/target，编译产物可复用。
+      - name: Compile Rust (capture real errors)
+        shell: bash
+        run: |
+          mkdir -p ci_diag
+          cargo build --release --manifest-path src-tauri/Cargo.toml 2>&1 | tee ci_diag/03-cargo-build.log
+          exit ${PIPESTATUS[0]}
+
+      # ---- 3. 打包桌面应用 ----
+      #
+      # targets 只保留 nsis（见 src-tauri/tauri.conf.json 注释）：
+      # msi 依赖已归档的 WiX v3，其 light.exe 在 GitHub Actions 上被 Defender
+      # 启发式拦截，官方亦将 nsis 标注为 recommended。
+      # 不用 tauri-action：它的输出只进 Actions UI，而该日志托管在 Azure
+      # Blob，沙盒下载一律 403——打包失败时零日志可查，只能猜。改为显式
+      # 执行 tauri CLI 并 tee 落盘，任何失败都能随诊断回传带出来。
+      - name: Build Tauri bundle
+        shell: bash
+        run: |
+          mkdir -p ci_diag
+          npx --yes @tauri-apps/cli@^2 build 2>&1 | tee ci_diag/03b-tauri-build.log
+          exit ${PIPESTATUS[0]}
+
+      # ---- 4. 真实安装验证：不只是"文件存在"，而是装完能跑 ----
+      #
+      # 这是 externalBin 只带 exe 这个坑的唯一真实检验场：
+      # 安装后 omegaforge-backend.exe 与 _internal/ 必须同级，否则启动即报
+      # Failed to load Python shared library。
+      - name: Real silent install + verify layout + boot sidecar
+        shell: cmd
+        env:
+          OF_PORT: '8792'
+          OF_SMOKE_TIMEOUT: '60'
+        run: |
+          setlocal enabledelayedexpansion
+          set SETUP=
+          for %%f in (src-tauri\target\release\bundle\nsis\*.exe) do set SETUP=%%f
+          if "!SETUP!"=="" (
+            echo ::error::未找到 NSIS 安装包
+            dir /s /b src-tauri\target\release\bundle 2>nul
+            exit /b 1
+          )
+          echo SETUP=!SETUP!
+          rmdir /s /q C:\of_install 2>nul
+          "!SETUP!" /S /D=C:\of_install
+          echo install-exit=!ERRORLEVEL!
+          if not exist ci_diag mkdir ci_diag
+          python scripts/ci_verify_install.py C:\of_install > ci_diag\04-install-verify.log 2>&1
+          set RC=!ERRORLEVEL!
+          type ci_diag\04-install-verify.log
+          if not "!RC!"=="0" exit /b !RC!
+
+      # 功能验收：启动成功 ≠ 功能可用。
+      #
+      # 上一道只证明"装完能跑起来"。而每个端点仍可能回空列表、回 HTML
+      # 错误页、或返回占位假值——这些在"能启动"的判定下全部通过。
+      # 这里对安装目录里那个 exe 逐个端点发真实请求，要求路由存在、
+      # 响应是 JSON、且不是空壳，等价于用户打开每个页面时前端发起的调用。
+      - name: Feature acceptance on installed app
+        shell: cmd
+        env:
+          OF_PORT: '8793'
+          OF_SMOKE_TIMEOUT: '60'
+        run: |
+          setlocal enabledelayedexpansion
+          if not exist ci_diag mkdir ci_diag
+          python scripts/ci_verify_features.py C:\of_install > ci_diag\05-features.log 2>&1
+          set RC=!ERRORLEVEL!
+          type ci_diag\05-features.log
+          if not "!RC!"=="0" exit /b !RC!
+
+      # 覆盖安装（升级）验收：全新安装验不到这条路径。
+      #
+      # 上一步已经往安装目录里写了知识库等内容。这里把同一个安装包
+      # 往同一目录再装一遍，要求数据与可启动性都还在——
+      # 覆盖安装清掉用户数据属于静默丢数据，全新安装的验收看不见。
+      - name: Verify in-place upgrade keeps user data
+        shell: cmd
+        env:
+          OF_PORT: '8794'
+          OF_SMOKE_TIMEOUT: '60'
+          OF_UPGRADE_MARK: '验收写入的一条知识'
+        run: |
+          setlocal enabledelayedexpansion
+          set SETUP=
+          for %%f in (src-tauri\target\release\bundle\nsis\*.exe) do set SETUP=%%f
+          if "!SETUP!"=="" (
+            echo ::error::未找到 NSIS 安装包
+            exit /b 1
+          )
+          "!SETUP!" /S /D=C:\of_install
+          echo upgrade-install-exit=!ERRORLEVEL!
+          if not exist ci_diag mkdir ci_diag
+          python scripts/ci_verify_upgrade.py C:\of_install > ci_diag\06-upgrade.log 2>&1
+          set RC=!ERRORLEVEL!
+          type ci_diag\06-upgrade.log
+          rem 空日志意味着脚本根本没跑到第一行就退出了，而退出码可能是 0。
+          rem 不加这条的话，"验收通过"有可能只是"什么都没验"。
+          set SIZE=0
+          for %%A in ("ci_diag\06-upgrade.log") do set SIZE=%%~zA
+          if "!SIZE!"=="0" (
+            echo ::error::升级验收日志为空（RC=!RC!）——脚本未真正执行，不得判通过
+            exit /b 1
+          )
+          if not "!RC!"=="0" exit /b !RC!
+
+      # 真实装机体积此前从未被采集过：安装包 8MB 只是压缩后的数字，
+      # 解压后占多少磁盘、有多少文件，必须实测而不是推算。
+      - name: Report installed footprint
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p ci_diag
+          {
+            # 目录不存在时必须报"未采集"，不能打印 installed_files=0：
+            # 0 读起来像"装完了但一个文件都没有"，而真实含义是"压根没测到"。
+            # 下游读日志的人会照着 0 去查打包配置，方向完全反了。
+            if [ ! -d /c/of_install ]; then
+              echo "未采集：安装目录不存在（安装步骤未执行）"
+            else
+              echo "installed_files=$(find /c/of_install -type f 2>/dev/null | wc -l)"
+              echo "installed_MB=$(du -sm /c/of_install 2>/dev/null | cut -f1)"
+            fi
+            echo "--- 安装包（压缩后） ---"
+            ls -la src-tauri/target/release/bundle/nsis/*.exe 2>/dev/null || echo "（未产出安装包）"
+            echo "--- 关键布局 ---"
+            ls -la /c/of_install 2>/dev/null | head -30 || echo "（安装目录不存在）"
+          } | tee ci_diag/04-install-size.log
+          # 本步只采集体积，不阻断。
+          # GitHub 的 bash 入口带 -eo pipefail：上面任一管道非 0 就会在到达
+          # 本行之前中止，exit 0 成为死代码。此前正是如此——安装目录缺失时
+          # 本步被判失败，而报出来的原因是采集脚本自己，真正的失败被盖住。
+          # 故上面每条管道都必须显式容错，这行 exit 0 才真的生效。
+          exit 0
+
+      # 卸载验收：装上之后能不能真的卸掉，此前从未走过一遍。
+      #
+      # 关键点是"带着正在运行的应用卸载"——真实用户不会先退出再卸载。
+      # 服务进程占住文件时，卸载器会卡死不返回；删了文件却没停服务时，
+      # 用户以为卸掉了，实际还在占端口。两者在"先停再卸"里都看不见。
+      - name: Verify uninstall (with app running)
+        shell: cmd
+        env:
+          OF_PORT: '8795'
+          OF_UNINSTALL_TIMEOUT: '180'
+        run: |
+          setlocal enabledelayedexpansion
+          if not exist ci_diag mkdir ci_diag
+          python scripts/ci_verify_uninstall.py C:\of_install > ci_diag\07-uninstall.log 2>&1
+          set RC=!ERRORLEVEL!
+          type ci_diag\07-uninstall.log
+          if not "!RC!"=="0" exit /b !RC!
+
+      - name: Upload installers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmegaForge-Studio-Windows
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: warn
+
+      # ---- 5. 诊断回传：必须在最后且 always()，覆盖上面所有失败 ----
+      #
+      # 实测教训（勿退回旧位置）：此前该步骤排在 Build Tauri 之前，
+      # 于是打包失败时诊断早已执行完毕，回传的是"还没失败"的空信息。
+      - name: Diag fallback (always, must be last)
+        if: always()
+        shell: bash
+        env:
+          OF_PAT: ${{ secrets.OF_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python scripts/ci_diag_always.py
+      # 实测：artifact 与 job 日志都托管在 Azure Blob，沙盒下载一律 403。
+      # 仓库文件内容走 contents API 是唯一可读通道，故把日志推到独立分支，
+      # 不用 master 是为了避免这次 commit 再触发一轮 CI。
+      # 产物回传：安装包必须落进 git 树才能被取回。
+      #
+      # artifact 与 job 日志托管在 Azure Blob，下载一律 403；release asset
+      # 走资源域同样不可达。仓库文件内容走 contents API 是唯一可读通道，
+      # 所以把安装包提交到独立分支，才能对产物做解包与布局验证。
+      # 用独立分支而非主分支：避免这次提交再触发一轮构建。
+      - name: Publish installer manifest to artifacts branch
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          # 全部输出同时落进 ci_diag：本步骤排在 ci-logs 回传之前，job 日志
+          # 又托管在 Azure Blob（沙盒下载一律 403），不落盘就永远看不到真实
+          # 报错，只能靠猜——而猜会把排查方向带偏。随后 ci-logs 步骤会带上它。
+          # 同步落盘，不用 tee 管道：tee 是后台进程，exit 时可能还没写完，
+          # 而恰恰失败那次的输出最需要被看到。
+          # 先把真正的 job 日志存到 fd3：重定向生效后直接 cat 日志会写回
+          # 日志自身，job 日志里反而一个字都没有——落盘了却谁也看不见。
+          mkdir -p ci_diag
+          exec 3>&1
+          exec > ci_diag/09-publish.log 2>&1
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          # 必须从远端已有分支继续，不能用 -B 从当前源码重建：
+          # 重建会把整棵源码树提交进产物分支，产物被淹没在一个巨大的树里，
+          # 取回时要先捞几百条无关条目；更糟的是分支上会同时存在源码与
+          # 上一轮的安装包，取回时容易拿到过期产物，而"验证通过"的结论
+          # 会因此挂在旧包上。
+          if git fetch origin artifacts:artifacts 2>/dev/null; then
+            git checkout artifacts
+          else
+            git checkout --orphan artifacts
+          fi
+          # 只留本次产物：旧包与新源码并存时无从判断该验哪一个。
+          # 先清索引再 add：分支历史上若已混入源码树，只 add 指定目录并不
+          # 会把它移除——它会一直跟着每一次提交留下去，表现为"分支里有几百
+          # 条无关条目"，而产物被淹没其中。
+          git rm -r --cached . --quiet 2>/dev/null
+          rm -rf installer
+          mkdir -p installer
+          EXE=$(ls src-tauri/target/release/bundle/nsis/*.exe 2>/dev/null | head -1)
+          # 安装包缺失必须判失败：目录为空时 git 也"无变化"，若照旧走
+          # "无产物变化" 就是绿色通过——打包没出包而报告全绿，比报红更坏。
+          if [ -z "$EXE" ]; then
+            echo "FAIL 安装包缺失：bundle/nsis 下没有 exe"
+            ls -la src-tauri/target/release/bundle/ 2>/dev/null
+            ls -la src-tauri/target/release/bundle/nsis/ 2>/dev/null
+            exit 1
+          fi
+          # 只回传清单，不回传安装包本体：git 单文件上限 100MB，内置语音
+          # 运行库与模型后安装包远超该上限，push 会被 GH001 直接拒绝——
+          # 表现为"安装包已产出、装机验收全绿，唯独回传这一步红"，把真
+          # 实结论掩盖成整轮失败。安装包本体改走 Release 资产（单文件
+          # 2GB，且带人类可直接点击的下载地址）。
+          python scripts/write_installer_manifest.py \
+            --exe "$EXE" --out installer/manifest.json --run "${{ github.run_number }}"
+          rc=$?
+          if [ "$rc" -ne 0 ]; then
+            echo "FAIL 写安装包清单失败 rc=$rc"
+            exit 1
+          fi
+          ls -la installer
+          git add -f installer
+          rc=0
+          if git diff --cached --quiet; then
+            echo "无产物变化（本次清单与分支上已有内容逐字节相同）"
+          else
+            git commit -m "ci: 回传 run ${{ github.run_number }} 安装包清单"
+            rc=$?
+            echo "commit rc=$rc"
+            if [ "$rc" -eq 0 ]; then
+              git push origin HEAD:artifacts --force
+              rc=$?
+              echo "push rc=$rc"
+            fi
+          fi
+          # 退出码必须先存再用：$? 在 echo 之后取到的是 echo 自己的 0，
+          # push 失败会被写成成功，而产物根本没上分支。
+          cat ci_diag/09-publish.log >&3
+          exit $rc
+
+      - name: Publish installer as GitHub Release asset
+        if: always()
+        shell: bash
+        env:
+          OF_PAT: ${{ secrets.OF_PAT }}
+        run: |
+          set +e
+          mkdir -p ci_diag
+          exec 3>&1
+          exec > ci_diag/09b-release.log 2>&1
+          EXE=$(ls src-tauri/target/release/bundle/nsis/*.exe 2>/dev/null | head -1)
+          # 缺失必须判失败：静默跳过会让本步骤显示成功而 Release 上什么
+          # 都没有，用户找不到下载地址，且无人知道发布环节失效了。
+          if [ -z "$EXE" ]; then
+            echo "FAIL 安装包缺失，无法发布 Release 资产"
+            ls -la src-tauri/target/release/bundle/nsis/ 2>/dev/null
+            exit 1
+          fi
+          python scripts/publish_installer_release.py \
+            --repo "${{ github.repository }}" --tag installer-latest --exe "$EXE"
+          rc=$?
+          cat ci_diag/09b-release.log >&3
+          exit $rc
+
+      - name: Publish build logs to ci-logs branch
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          # 从远端已有分支继续累加，而不是从当前源码重建：
+          # 重建会整棵覆盖掉上一轮的日志，而失败的那轮恰恰最需要复查。
+          if git fetch origin ci-logs:ci-logs 2>/dev/null; then
+            git checkout ci-logs
+          else
+            git checkout --orphan ci-logs
+          fi
+          mkdir -p logs
+          RUN="${{ github.run_number }}"
+          for f in ci_diag/*.log; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            tail -c 8000 "$f" > "logs/run${RUN}-${base}"
+          done
+          ls -la logs
+          # 清索引后再 add：日志要累加（失败那轮最需要复查），但分支上不得
+          # 混进源码树——混入后日志被几百条无关条目淹没，取回时先捞一堆没
+          # 用的。清索引保证无论历史如何，本次提交只含 logs。
+          git rm -r --cached . --quiet 2>/dev/null
+          git add -f logs
+          if git diff --cached --quiet; then
+            echo "无日志变化"
+          else
+            git commit -m "ci: 回传 run ${RUN} 构建日志"
+            git push origin HEAD:ci-logs --force
+          fi
