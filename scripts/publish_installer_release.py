@@ -155,17 +155,21 @@ def main() -> int:
     size = os.path.getsize(args.exe)
     print(f"安装包 {os.path.basename(args.exe)} · {size} 字节")
 
+    digest = sha256_of(args.exe)
+    print(f"sha256={digest}")
+
+    # dry-run 必须在读令牌之前返回：dry-run 的目的是在**没有令牌的环境**
+    # 里核对体积与摘要（本地、以及任何未注入密钥的地方）。令牌检查前置
+    # 会让 dry-run 在缺令牌时退出 1，于是"能不能算出体积与 sha256"这件
+    # 事被"有没有密钥"挡住，核对本身一次也没被执行。
+    if args.dry_run:
+        print("dry-run：不上传")
+        return 0
+
     token = _token()
     if not token:
         print("FAIL 读不到访问令牌（OF_PAT / GITHUB_TOKEN）")
         return 1
-
-    digest = sha256_of(args.exe)
-    print(f"sha256={digest}")
-
-    if args.dry_run:
-        print("dry-run：不上传")
-        return 0
 
     gh = GH(args.repo, token)
     rel = gh.release_by_tag(args.tag)

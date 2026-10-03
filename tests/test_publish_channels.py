@@ -69,6 +69,40 @@ def test_release_missing_exe_fails():
         assert r.returncode == 1, r.stdout
 
 
+def test_release_dry_run_never_reads_token():
+    """dry-run 必须在**没有令牌**的环境里也能核对体积与 sha256。
+
+    令牌检查排在 dry-run 之前时，dry-run 在缺令牌的环境里退出 1：核对
+    本身一次都没执行。而本地通常有令牌文件，这条失效只在 CI 上现形——
+    症状是"发布脚本坏了"，排查方向指向网络与权限，与真实原因无关。
+
+    这里直接把 _token 换成会抛错的探针：dry-run 若去读令牌，用例立刻红，
+    不受本机是否恰好存在令牌文件影响。
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "pub_rel_dry", SCRIPTS / "publish_installer_release.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    def _boom():
+        raise AssertionError("dry-run 不得读取访问令牌")
+
+    mod._token = _boom
+    with tempfile.TemporaryDirectory() as d:
+        exe = Path(d) / "a.exe"
+        exe.write_bytes(b"y" * 2048)
+        import sys as _sys
+        old = _sys.argv
+        _sys.argv = ["publish_installer_release.py", "--repo", "x/y",
+                     "--exe", str(exe), "--dry-run"]
+        try:
+            rc = mod.main()
+        finally:
+            _sys.argv = old
+    assert rc == 0
+
+
 def test_release_without_token_fails(monkeypatch):
     """无令牌必须报错：静默返回会让发布步骤显示成功而 Release 上没有资产。"""
     import importlib.util

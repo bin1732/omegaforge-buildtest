@@ -72,8 +72,11 @@ def _build_tts_home(root: str, model: int, tokens: int,
   home = os.path.join(root, "h%d" % (model + tokens + lexicon + dict_files))
   mdir = os.path.join(home, tts.TTS_MODEL_NAME)
   os.makedirs(os.path.join(mdir, "dict"), exist_ok=True)
-  for name, size in (("model.onnx", model), ("tokens.txt", tokens),
-            ("lexicon.txt", lexicon)):
+  # 主模型文件名取自 spec 的唯一定义。写成字面量时，换用量化版主模型
+  # 会让夹具按旧名造文件、status 按新名去找，于是"真实安装"用例报
+  # 缺 model.int8.onnx——症状看着像 status 判错了，实际是夹具没跟着走。
+  for name, size in ((voice_spec.TTS_MODEL_FILE, model),
+            ("tokens.txt", tokens), ("lexicon.txt", lexicon)):
     with open(os.path.join(mdir, name), "wb") as f:
       f.write(b"x" * size)
   for i in range(dict_files):
@@ -86,7 +89,7 @@ def test_tts_rejects_empty_and_truncated_models(tmp_path):
   """0 字节 / 截断模型必须被识破，不能报"齐备"。"""
   home = _build_tts_home(str(tmp_path), model=0, tokens=655, lexicon=50_000)
   missing = tts.engine(home=home).status()["files_missing"]
-  assert "model.onnx" in missing, "0 字节模型被误判为已安装"
+  assert voice_spec.TTS_MODEL_FILE in missing, "0 字节模型被误判为已安装"
   assert "tokens.txt" not in missing, "真实体积的词表不得被体积下限误杀"
 
 
@@ -126,7 +129,7 @@ def test_asr_and_tts_share_one_size_threshold():
   voice_spec.min_bytes_for：两侧对同一条目取到的值必须相同，且模型
   文件取到的就是 model_size 里那一个值。
   """
-  for entry in ("model.onnx", "encoder-epoch-99-avg-1.int8.onnx"):
+  for entry in (voice_spec.TTS_MODEL_FILE, "encoder-epoch-99-avg-1.int8.onnx"):
     assert voice_spec.min_bytes_for(entry) == model_size.MODEL_MIN_BYTES
   # 两侧不得各自保留一份常量：判定点只走 min_bytes_for（另见
   # test_voice_size_floor 的源码守卫）
@@ -148,5 +151,5 @@ def test_asr_size_threshold_follows_shared_definition(tmp_path, size, missing):
 
 def test_tts_threshold_matches_asr():
   """两边阈值必须同源，防止再次出现一边识破、一边谎报。"""
-  assert voice_spec.min_bytes_for("model.onnx") == 10_000
+  assert voice_spec.min_bytes_for(voice_spec.TTS_MODEL_FILE) == 10_000
   assert asr.SAMPLE_RATE_MIN == 8_000 and asr.SAMPLE_RATE_MAX == 48_000

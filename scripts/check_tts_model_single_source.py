@@ -25,6 +25,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 VOICE_DIR = REPO / "omegaforge" / "voice"
+TESTS_DIR = REPO / "tests"
 OWNER = "spec.py"
 
 #: 主模型文件名的两种形态：fp32 与 int8 量化版。
@@ -46,18 +47,28 @@ def _string_constants(path: Path) -> list[tuple[int, str]]:
 
 
 def scan() -> list[str]:
-    """返回违规描述列表。空列表表示合规。"""
+    """返回违规描述列表。空列表表示合规。
+
+    扫描范围含 tests/：换用 int8 主模型那次，名字只在 omegaforge/ 内收归
+    了单一定义，而 tests/test_voice_contract.py 的夹具仍按旧名造文件——
+    本地只跑被改的用例时全绿，CI 全量跑到才现形，且症状是"status 判错了"
+    （夹具造的文件与 status 找的名字对不上），排查方向整个偏掉。
+    因此夹具也必须从 spec 取名字，并由这条守卫钉住。
+    """
+    bad = []
     if not VOICE_DIR.is_dir():
         # 目录不存在必须报错：否则路径写错时它退化成恒真。
         return [f"找不到语音模块目录：{VOICE_DIR}"]
-    bad = []
-    for path in sorted(VOICE_DIR.glob("*.py")):
+    if not TESTS_DIR.is_dir():
+        # 同上：tests 目录缺失时不得静默放行。
+        return [f"找不到用例目录：{TESTS_DIR}"]
+    for path in sorted(VOICE_DIR.glob("*.py")) + sorted(TESTS_DIR.glob("*.py")):
         if path.name == OWNER:
             continue
         for lineno, value in _string_constants(path):
             if value in NAMES:
-                bad.append(f"{path.name}:{lineno} 出现主模型文件名 "
-                           f"{value!r}（应引用 spec.TTS_MODEL_FILE）")
+                bad.append(f"{path.parent.name}/{path.name}:{lineno} 出现主模型"
+                           f"文件名 {value!r}（应引用 spec.TTS_MODEL_FILE）")
     return bad
 
 

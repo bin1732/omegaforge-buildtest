@@ -96,7 +96,7 @@ def home(tmp_path, monkeypatch):
 def _spec(monkeypatch, urls):
     monkeypatch.setitem(fetch.SPEC, "asr", {
         "name": "asr-test", "mirrors": list(urls),
-        "files": ["tokens.txt", "model.onnx"]})
+        "files": ["tokens.txt", "encoder.onnx"]})
 
 
 def test_download_installs_real_files(home, monkeypatch):
@@ -107,7 +107,7 @@ def test_download_installs_real_files(home, monkeypatch):
         assert st["state"] == "done"
         d = home / "models" / "asr-test"
         assert (d / "tokens.txt").stat().st_size == len(BODY)
-        assert (d / "model.onnx").stat().st_size == len(BODY)
+        assert (d / "encoder.onnx").stat().st_size == len(BODY)
         # 原子落盘：不得留下 .part
         assert list(d.glob("*.part")) == []
     finally:
@@ -173,7 +173,7 @@ def test_tiny_model_rejected(home, monkeypatch):
         _spec(monkeypatch, [url])
         with pytest.raises(RuntimeError):
             fetch.install("asr")
-        assert not (home / "models" / "asr-test" / "model.onnx").exists()
+        assert not (home / "models" / "asr-test" / "encoder.onnx").exists()
     finally:
         srv.shutdown()
 

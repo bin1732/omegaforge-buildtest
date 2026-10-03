@@ -39,7 +39,7 @@ JUDGE_SITES = ["omegaforge/voice/asr.py", "omegaforge/voice/tts.py",
 
 
 def test_model_file_uses_full_floor():
-    assert voice_spec.min_bytes_for("model.onnx") == MODEL_MIN_BYTES
+    assert voice_spec.min_bytes_for("probe.onnx") == MODEL_MIN_BYTES
     assert voice_spec.min_bytes_for("encoder-epoch-99-avg-1.int8.onnx") == MODEL_MIN_BYTES
 
 
