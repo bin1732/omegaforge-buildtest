@@ -57,6 +57,19 @@ GOOD = """
           mkdir -p installer
 """
 
+# 走 Git Data API 的发布脚本：以远端 commit 为父提交，同样是从已有分支继续。
+# 产物分支的实际写法——它排在前端构建之后，而前端构建会改
+# frontend/package-lock.json，git checkout 会因"本地改动会被覆盖"中止，
+# 报的是 git 的错，真实意图完全没达成。不认这种写法，守卫就会把流程
+# 逼回一个已知会失败的实现。
+GOOD_API = """
+      - name: Publish installer manifest to artifacts branch
+        run: |
+          python scripts/publish_manifest_api.py \\
+            --repo "${{ github.repository }}" --branch artifacts \\
+            --file installer/manifest.json --path installer/manifest.json
+"""
+
 # 注释里引用旧写法是常见情形（说明为什么要改），不应被判为不合规
 GOOD_WITH_COMMENT = """
       - name: Publish installer to artifacts branch
@@ -104,6 +117,12 @@ def test_without_fetch_is_rejected():
 def test_compliant_is_accepted():
     p = _run(GOOD)
     assert p.returncode == 0, f"合规写法被误判：{p.stdout}"
+
+
+def test_api_publish_counts_as_continuing_from_remote():
+    """走 API 的回传必须被认作"从远端继续"，否则守卫会逼流程退回 git checkout。"""
+    p = _run(GOOD_API)
+    assert p.returncode == 0, f"API 回传写法被误判：{p.stdout}"
 
 
 def test_comment_mention_is_not_treated_as_usage():

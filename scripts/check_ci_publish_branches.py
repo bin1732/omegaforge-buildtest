@@ -106,6 +106,26 @@ def prune_problems(path: Path) -> list[str]:
     return out
 
 
+def _continues_from_remote(body: str, branch: str) -> bool:
+    """分支是否从远端已有分支继续。
+
+    两种合法写法：
+    1. `git fetch origin <分支>` —— 检出远端历史再提交；
+    2. 走 Git Data API 的发布脚本（`publish_*_api.py --branch <分支>`）——
+       以远端 commit 为父提交，同样是从已有分支继续。
+
+    第 2 种是产物分支的实际写法：它排在前端构建之后，而前端构建会改
+    frontend/package-lock.json，此时 `git checkout` 会因"本地改动会被覆盖"
+    中止——报的是 git 的错，真实意图（留下这一轮包的体积与校验和）完全没
+    达成。不认这种写法，守卫就会逼着流程退回一个已知会失败的实现。
+    """
+    if re.search(rf"git\s+fetch\s+origin\s+{re.escape(branch)}\b", body):
+        return True
+    m = re.search(r"scripts/publish_\w*_api\.py[\s\S]{0,400}?--branch\s+"
+                  rf"['\"]?{re.escape(branch)}\b", body)
+    return bool(m)
+
+
 def _first_index(text: str, needle: str) -> int | None:
     """返回 needle 首次出现的行号下标；注释行不参与。
 
@@ -139,7 +159,7 @@ def main() -> int:
                 continue
             if re.search(rf"git\s+checkout\s+-B\s+{re.escape(br)}\b", body):
                 bad.append(f"{f.name}: 用 checkout -B 重建回传分支 {br}（会混入源码树并覆盖上一轮内容）")
-            if not re.search(rf"git\s+fetch\s+origin\s+{re.escape(br)}\b", body):
+            if not _continues_from_remote(body, br):
                 bad.append(f"{f.name}: 回传分支 {br} 未从远端已有分支继续")
         bad.extend(prune_problems(f))
 

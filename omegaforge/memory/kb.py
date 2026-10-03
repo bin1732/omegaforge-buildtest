@@ -263,4 +263,17 @@ class KnowledgeBase(LazyHome):
         return self.add(title=fact[:60], text=fact, type="memory", tags=tags)
 
     def recall(self, query: str, limit: int = 3) -> list[dict]:
+        # 空检索词必须返回最近写入的记忆，而不是空列表。
+        # 界面写着"点上方检索可拉取已有记忆"，而 search() 对空查询返回 []：
+        # 用户点「记住」之后，前端立刻用它刚填的词为空去拉取，列表仍是
+        # 「暂无记忆」——看着像没记住，用户会反复点、重复写入。
+        # 返回结构带 text：界面按 text 优先展示，只给 title 的话显示的是
+        # 截断到 60 字的标题，长记忆会被无声截短。
+        if not _tokens(query):
+            docs = self.all(type="memory")[:max(1, limit)]
+            return [{"id": _safe_str(d.get("id")),
+                     "type": _safe_str(d.get("type"), "memory"),
+                     "title": _safe_str(d.get("title")),
+                     "text": _safe_str(d.get("text")),
+                     "score": 0.0} for d in docs if isinstance(d, dict)]
         return self.search(query, type="memory", limit=limit)

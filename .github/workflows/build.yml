@@ -304,6 +304,14 @@ jobs:
       # 且再也找不回来"这类问题——列表接口有数据、统计字段正确、完成接口
       # 返回成功，只有真的在界面上点一遍才会发现。
       # 这一步跑在真实构建产物上，不是源码目录。
+      # 四个界面类步骤一律软失败：只记录，不阻断。
+      #
+      # 为什么：原编排是串行阻断，第一个红点之后的步骤全部 skipped——
+      # 一轮构建只能暴露一个问题，修完再跑才知道下一个。而编译打包、
+      # 装机后 109 项功能验收、覆盖安装保住数据、带运行中的应用卸载
+      # 这四段与界面点击互不依赖，被跳过等于每轮白扔掉四份真实证据。
+      # 软失败不等于放过：末尾有汇总步骤统一读 soft-fail.txt 判失败，
+      # 且每一步的真实日志都落进 ci_diag 随诊断回传。
       - name: Human user journey (real UI, real clicks)
         shell: bash
         env:
@@ -314,7 +322,9 @@ jobs:
           npm install --no-save playwright@1.49.1 2>&1 | tail -3
           npx playwright install chromium 2>&1 | tail -5
           bash scripts/run_user_journey.sh 2>&1 | tee ci_diag/02b-user-journey.log
-          exit ${PIPESTATUS[0]}
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then echo "02b-user-journey rc=$rc" >> ci_diag/soft-fail.txt; fi
+          exit 0
 
       # ---- 深度人类旅程：核心流水线五个页面 ----
       #
@@ -334,7 +344,9 @@ jobs:
           python3 scripts/verify_pixels_per_page.py \
             --dist frontend/dist --shots ci_diag/shots 2>&1 \
             | tee ci_diag/02d-pixels.log
-          exit ${PIPESTATUS[0]}
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then echo "02d-pixels rc=$rc" >> ci_diag/soft-fail.txt; fi
+          exit 0
 
       - name: Deep user journey (pipeline pages, two real runs)
         shell: bash
@@ -342,7 +354,27 @@ jobs:
           set -o pipefail
           mkdir -p ci_diag
           bash scripts/run_user_journey_deep.sh 2>&1 | tee ci_diag/02c-user-journey-deep.log
-          exit ${PIPESTATUS[0]}
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then echo "02c-deep-journey rc=$rc" >> ci_diag/soft-fail.txt; fi
+          exit 0
+
+      # ---- 第二批用户旅程：检索 / 会话 / 语音 / 供应商 ----
+      #
+      # 为什么还要第二批：第一批只验"写进去读得回来"。而知识库的检索框、
+      # 对话页的会话新建与删除、设置页的语音与供应商切换，用户天天会用，
+      # 却一次都没被真正点过。接口层全绿、按钮点不动，只会表现为
+      # "用户说这功能没有"——没有任何一层能报出来。
+      # 语音必须验两次并做识别闭环：只验一次合成的话，"合成出的音频根本
+      # 不能被识别（格式错 / 静音）"永远看不见，而界面不报错。
+      - name: Full user journey (search, sessions, voice, providers)
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p ci_diag
+          bash scripts/run_user_journey_full.sh 2>&1 | tee ci_diag/02e-user-journey-full.log
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then echo "02e-full-journey rc=$rc" >> ci_diag/soft-fail.txt; fi
+          exit 0
 
       # 实测教训：GitHub 把 job 日志托管在 Azure Blob，对沙盒脚本 403
       # 不可下载；diagnostics issue 又依赖 secret 是否注入。
@@ -550,6 +582,11 @@ jobs:
       - name: Publish installer manifest to artifacts branch
         if: always()
         shell: bash
+        env:
+          # 脚本认 OF_PAT / GITHUB_TOKEN / OF_GITHUB_TOKEN / GH：工作流里以
+          # 别的名字注入时报"读不到令牌"，一次白跑一轮构建。
+          OF_PAT: ${{ secrets.OF_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set +e
           # 全部输出同时落进 ci_diag：本步骤排在 ci-logs 回传之前，job 日志
@@ -562,25 +599,11 @@ jobs:
           mkdir -p ci_diag
           exec 3>&1
           exec > ci_diag/09-publish.log 2>&1
-          git config user.name "ci-bot"
-          git config user.email "ci-bot@users.noreply.github.com"
-          # 必须从远端已有分支继续，不能用 -B 从当前源码重建：
-          # 重建会把整棵源码树提交进产物分支，产物被淹没在一个巨大的树里，
-          # 取回时要先捞几百条无关条目；更糟的是分支上会同时存在源码与
-          # 上一轮的安装包，取回时容易拿到过期产物，而"验证通过"的结论
-          # 会因此挂在旧包上。
-          if git fetch origin artifacts:artifacts 2>/dev/null; then
-            git checkout artifacts
-          else
-            git checkout --orphan artifacts
-          fi
-          # 只留本次产物：旧包与新源码并存时无从判断该验哪一个。
-          # 先清索引再 add：分支历史上若已混入源码树，只 add 指定目录并不
-          # 会把它移除——它会一直跟着每一次提交留下去，表现为"分支里有几百
-          # 条无关条目"，而产物被淹没其中。
-          git rm -r --cached . --quiet 2>/dev/null
-          rm -rf installer
-          mkdir -p installer
+          # 不 checkout 产物分支：前端构建会改 frontend/package-lock.json，
+          # 而本步骤排在它之后，git checkout 会因"本地改动会被覆盖"直接
+          # 中止——报的是 git 的错，真实意图（留下这一轮包的体积与校验和）
+          # 完全没达成，而失败那轮恰恰最需要这条信息。改走 Git Data API
+          # 直接提交单个文件，不碰工作区，与工作区脏不脏无关。
           EXE=$(ls src-tauri/target/release/bundle/nsis/*.exe 2>/dev/null | head -1)
           # 安装包缺失必须判失败：目录为空时 git 也"无变化"，若照旧走
           # "无产物变化" 就是绿色通过——打包没出包而报告全绿，比报红更坏。
@@ -603,22 +626,12 @@ jobs:
             exit 1
           fi
           ls -la installer
-          git add -f installer
-          rc=0
-          if git diff --cached --quiet; then
-            echo "无产物变化（本次清单与分支上已有内容逐字节相同）"
-          else
-            git commit -m "ci: 回传 run ${{ github.run_number }} 安装包清单"
-            rc=$?
-            echo "commit rc=$rc"
-            if [ "$rc" -eq 0 ]; then
-              git push origin HEAD:artifacts --force
-              rc=$?
-              echo "push rc=$rc"
-            fi
-          fi
+          python scripts/publish_manifest_api.py \
+            --repo "${{ github.repository }}" --branch artifacts \
+            --file installer/manifest.json --path installer/manifest.json
+          rc=$?
           # 退出码必须先存再用：$? 在 echo 之后取到的是 echo 自己的 0，
-          # push 失败会被写成成功，而产物根本没上分支。
+          # 推送失败会被写成成功，而产物根本没上分支。
           cat ci_diag/09-publish.log >&3
           exit $rc
 
@@ -679,3 +692,26 @@ jobs:
             git commit -m "ci: 回传 run ${RUN} 构建日志"
             git push origin HEAD:ci-logs --force
           fi
+
+      # ---- 软失败汇总：放在最后，且必须在日志回传之后 ----
+      #
+      # 界面类四个步骤（第一批旅程 / 像素 / 深度旅程 / 第二批旅程）为软失败，
+      # 各自把失败记进 ci_diag/soft-fail.txt。没有这一步的话，软失败就退化成
+      # "点了也不算数"，整轮照样绿——那比串行走阻断更坏：阻断至少会红。
+      # 排在本轮日志回传之后：本步失败时，前面各步的真实输出已经上分支了。
+      - name: Summarize soft failures (must be last)
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p ci_diag
+          # soft-fail.txt 不是 .log，上面回传日志的循环不会带上它；
+          # 单独复制，否则软失败清单要等下一轮才看得到。
+          [ -f ci_diag/soft-fail.txt ] && cp ci_diag/soft-fail.txt ci_diag/soft-fail.txt.log
+          if [ -s ci_diag/soft-fail.txt ]; then
+            echo "::error::本轮存在界面类软失败："
+            cat ci_diag/soft-fail.txt
+            cat ci_diag/soft-fail.txt > ci_diag/10-soft-fail-summary.log
+            exit 1
+          fi
+          echo "无界面类软失败" > ci_diag/10-soft-fail-summary.log
+          echo "无界面类软失败"

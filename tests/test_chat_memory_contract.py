@@ -203,3 +203,30 @@ def test_wiki_non_utf8_page_does_not_break_listing(tmp_path):
   w = Wiki(str(tmp_path))
   slugs = [p["slug"] for p in w.pages()]
   assert "good" in slugs, "一个非 UTF-8 文件不得让整个词条列表 500"
+
+
+# ---------------------------------------------------------------
+# 空检索词必须返回最近记忆（run105 人类旅程在真实界面上的失败）
+# ---------------------------------------------------------------
+def test_recall_empty_query_returns_recent_memory(home):
+  # 界面写着「点上方检索可拉取已有记忆」，而 search() 对空查询返回 []：
+  # 用户点「记住」之后，前端立刻用它刚填的词为空去拉取，列表仍是「暂无
+  # 记忆」——看着像没记住，用户会反复点、重复写入。
+  kb = KnowledgeBase(home)
+  kb.remember("第一条记忆内容")
+  kb.remember("第二条记忆内容")
+  got = kb.recall("", limit=3)
+  assert len(got) == 2, f"空检索词应返回已记住的内容，实际 {got}"
+  assert all(d.get("text") for d in got), (
+    "必须带完整正文：只给 title 时界面显示的是截断到 60 字的标题")
+
+
+def test_recall_with_query_still_filters(home):
+  # 空查询分支不得顺手吞掉有词的检索，否则检索会退化成「列出全部」。
+  kb = KnowledgeBase(home)
+  kb.remember("用户住在东莞")
+  kb.remember("用户喜欢咖啡")
+  assert len(kb.recall("东莞", limit=3)) >= 1, "有检索词时必须仍能命中"
+  hit = json.dumps(kb.recall("东莞", limit=3), ensure_ascii=False)
+  assert "东莞" in hit
+  assert kb.recall("量子纠缠", limit=3) == [], "无关联检索不得回落成列表全部"
