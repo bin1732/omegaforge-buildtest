@@ -1,0 +1,57 @@
+127.0.0.1 - - [03/Oct/2026 17:18:59] "POST /api/distill HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=0 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=3 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=3 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=4 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=4 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=5 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=6 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=7 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=8 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=9 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=10 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=11 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=12 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:59] "GET /api/jobs/1f8c060eacac?since=13 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/jobs/1f8c060eacac?since=14 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/jobs/1f8c060eacac?since=15 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/jobs/1f8c060eacac?since=17 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/jobs/1f8c060eacac?since=18 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/jobs/1f8c060eacac?since=19 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/jobs/1f8c060eacac?since=19 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/jobs/1f8c060eacac?since=20 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/jobs/1f8c060eacac HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/runs HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:19:00] "GET /api/jobs/../../etc/passwd HTTP/1.1" 404 -
+
+[1] 提交蒸馏任务
+ [PASS] 返回 job id — 1f8c060eacac
+
+[2] 运行期轮询（核心回归）
+ [PASS] 运行期拿到日志 — 10 条
+ [PASS] 进度最终到 100 — 100
+ [PASS] 观测到多个阶段（进度可细分） — 阶段序列 ['queued', 'ingest', 'extract', 'compress', 'synthesize', 'gen_eval', 'freeze_eval', 'arena', 'finalize', 'succeeded']
+ [PASS] 关键阶段齐全 — 齐全
+ [PASS] 终态为 succeeded/failed — ['succeeded']
+
+[3] 结果与可信度标注
+ [PASS] status 兼容旧前端契约 — done
+ [PASS] outcome 为精确终态 — succeeded
+ [PASS] 含 verdict — tie
+ [PASS] 含 baseline_kind — source_prompt
+ [PASS] 含 claim_valid — False
+ [PASS] genome 可读
+
+[4] 进程重启后可恢复（新 RunStore 读取磁盘）
+ [PASS] 重启后能取回 run
+ [PASS] 事件仍在磁盘 — 20 条
+
+[5] /api/runs 列表
+ [PASS] 列表返回 runs — 1 个
+ [PASS] 列表项含 progress
+
+[6] 非法 id 防护
+ [PASS] 路径穿越被拒（404/400） — HTTP 404
+
+==============================================
+通过 17 · 失败 0

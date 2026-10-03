@@ -1,0 +1,10 @@
+OK 卸载入口存在：Uninstall.exe
+卸载前用户数据目录：C:\Users\runneradmin\AppData\Roaming\OmegaForge（已存在=True）
+卸载前服务状态：已监听 8792
+开始静默卸载（超时 180s）…
+卸载器退出码=0 用时=2.1s
+OK 卸载后主程序已不存在（检查过 1 种名字写法）
+OK 卸载后服务进程已终止
+OK 卸载后用户数据仍在：C:\Users\runneradmin\AppData\Roaming\OmegaForge
+卸载后安装目录残留条目 1 个：['uninstall.exe']
+OK 卸载后运行时已清除

@@ -1,0 +1,12 @@
+安装目录: C:\of_install
+存在: True
+sidecar exe : C:\of_install\omegaforge-backend.exe
+期望 _internal: C:\of_install\_internal
+exe size: 2498300
+OK _internal 同级，条目数 61
+OK 布局与内容校验通过（主程序 / 运行时 / 前端产物）
+耗时 1.5s · 端口 8792 · ready=True
+--- sidecar 输出 ---
+[sidecar] starting on 127.0.0.1:8792
+
+OK 安装后 sidecar 真实启动并监听成功 ✅

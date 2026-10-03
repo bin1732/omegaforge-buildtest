@@ -1,0 +1,6 @@
+{"run": "108", "name": "OmegaForge Studio_0.1.0_x64-setup.exe", "bytes": 186692899, "sha256": "3e7c6dab0ef99f999e7c2cad0947c392203237b15757f4fba6e32f0c9b15ce80", "generated_at": "2026-10-03T17:31:15Z"}
+total 5
+drwxr-xr-x 1 runneradmin 197121   0 Oct  3 17:31 .
+drwxr-xr-x 1 runneradmin 197121   0 Oct  3 17:31 ..
+-rw-r--r-- 1 runneradmin 197121 221 Oct  3 17:31 manifest.json
+OK 已回传 installer/manifest.json -> bin1732/omegaforge-buildtest artifacts （221 字节，回读一致）

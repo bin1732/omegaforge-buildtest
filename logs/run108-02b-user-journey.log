@@ -1,0 +1,25 @@
+export OF_JOURNEY_HOME='D:\a\omegaforge-buildtest\omegaforge-buildtest\ci_diag\journey\journey-fixtures\home'
+export OF_SKILL_A='D:\a\omegaforge-buildtest\omegaforge-buildtest\ci_diag\journey\journey-fixtures\jskill-a'
+export OF_SKILL_B='D:\a\omegaforge-buildtest\omegaforge-buildtest\ci_diag\journey\journey-fixtures\jskill-b'
+export OF_JOURNEY_BASE='D:\a\omegaforge-buildtest\omegaforge-buildtest\ci_diag\journey\journey-fixtures'
+夹具自检通过：两个技能包都含技能说明文件
+backend=200 frontend=200
+{"event":"step","name":"知识库·添加第一条","ok":true,"detail":"检索 重置 知识库 1 记忆 词条 0 新增条目 标题与内容均为必填 添加 条目列表 共 1 条 甲条知识 note 2026/10/3 17:20:47 819c80dc77 甲条正文 删除"}
+{"event":"step","name":"知识库·两条并存（非覆盖）","ok":true,"detail":"两条都在"}
+{"event":"step","name":"知识库·删除指定条目且未误删","ok":true,"detail":"被删的没了=true 留下的还在=true"}
+{"event":"step","name":"记忆·两条并存（非覆盖）","ok":true,"detail":"两条都在"}
+{"event":"step","name":"词条·两条并存（非覆盖）","ok":true,"detail":"两条都在"}
+{"event":"step","name":"词条·删除指定条目且未误删","ok":true,"detail":"被删的没了=true 留下的还在=true"}
+{"event":"step","name":"待办·两条并存（非覆盖）","ok":true,"detail":"两条都在"}
+{"event":"step","name":"待办·计数为 2","ok":true,"detail":"实际=2"}
+{"event":"step","name":"待办·完成后进入已完成列表","ok":true,"detail":"已在已完成里"}
+{"event":"step","name":"对话·有输入区","ok":true,"detail":"存在"}
+{"event":"step","name":"对话·第一条发出并收到回复","ok":true,"detail":"对话 共 1 条 甲条消息 2026/10/3 17:21:02 · 859bd1f877 对话 859bd1f877 切换模型 gpt-4o-mini auto→fast（任务特征分 0） 甲条消息 甲条消息。简短答复：已完成。 发送 模"}
+{"event":"step","name":"对话·两条并存（历史未丢）","ok":true,"detail":"都在"}
+{"event":"step","name":"技能·两个并存（非覆盖）","ok":true,"detail":"都在"}
+{"event":"step","name":"技能·调用返回提示词","ok":true,"detail":"拿到正文"}
+{"event":"step","name":"设置·有系统能力面板","ok":true,"detail":"存在"}
+{"event":"step","name":"设置·能力开启生效","ok":true,"detail":"已开启"}
+{"event":"step","name":"设置·能力开启后持久化","ok":true,"detail":"离开再回来仍是已开启"}
+{"event":"step","name":"控制台无报错","ok":true,"detail":"无"}
+{"event":"done","fail":0,"steps":18}

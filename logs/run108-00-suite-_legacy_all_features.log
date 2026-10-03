@@ -1,0 +1,128 @@
+��于对照评测的考题
+[DistillEngine]   第 1 轮 · 用例 c1：源 Agent 5.7 分，蒸馏体 8.5 分
+[DistillEngine]   第 1 轮 · 用例 c2：源 Agent 5.7 分，蒸馏体 8.5 分
+[DistillEngine]   第 1 轮 · 用例 c3：源 Agent 5.7 分，蒸馏体 8.5 分
+[DistillEngine]   第 1 轮 · 用例 c4：源 Agent 5.7 分，蒸馏体 8.5 分
+[DistillEngine]   第 1 轮 · 用例 c5：源 Agent 5.7 分，蒸馏体 8.5 分
+[DistillEngine]   第 1 轮 · 用例 c6：源 Agent 5.7 分，蒸馏体 8.5 分
+[DistillEngine]   注意：考题与评分标准由被测方自己生成，换裁判模型也绕不开，当前结论不作为「更强」的依据
+[DistillEngine]   注意：裁判与作答为同一模型（gpt-4o-mini），当前结论属自我评分，不作为「更强」的依据
+[DistillEngine] 蒸馏完成（裁判与作答为同一模型，当前结论属自我评分，本次胜负仅供参考）：蒸馏体 8.47 分，对照 5.71 分
+
+════════════ DISTILLATION VERDICT ════════════
+ genome        : C:\Users\RUNNER~1\AppData\Local\Temp\of_audit_z7zuiwar\cli_out/genome.json
+ verdict       : win
+ distilled     : 8.47 / 10
+ baseline      : 5.71 / 10
+ generations   : 1
+ system tokens : 100 (was est. 121)
+ tokens spent  : 3437 / 400000
+   · distill:extract         189
+   · distill:compress        127
+   · distill:synthesize      165
+   · distill:gen_eval        230
+   · arena:answer           1446
+   · arena:judge            1280
+═══════════════════════════════════════════════
+ ✅ 8.1 omegaforge distill
+
+ Ω OMEGAFORGE — distill any agent. forge it stronger. spend less.
+ ────────────────────────────────────────────────────────────────
+
+{
+  "source_signals": "Python 源码，共 285 字符；识别到 1 段提示词候选、1 个工具线索、1 条工作流线索；名称：sample_agent_demo",
+  "generation": 1,
+  "final_score": 8.471333333333334,
+  "baseline_score": 5.713333333333334,
+  "verdict": "win",
+  "judge_reasons": [
+    "依据内容特征评分：源 Agent 5.7 分，蒸馏体 8.46 分（维度：长度、结构、证据、信息密度） || 依据内容特征评分：源 Agent 8.46 分，蒸馏体 5.7 分（维度：长度、结构、证据、信息密度）",
+    "依据内容特征评分：源 Agent 5.73 分，蒸馏体 8.48 分（维度：长度、结构、证据、信息密度） || 依据内容特征评分：源 Agent 8.48 分，蒸馏体 5.73 分（维度：长度、结构、证据、信息密度）",
+    "依据内容特征评分：源 Agent 5.71 分，蒸馏体 8.47 分（维度：长度、结构、证据、信息密度） || 依据内容特征评分：源 Agent 8.47 分，蒸馏体 5.71 分（维度：长度、结构、证据、信息密度）",
+    "依据内容特征评分：源 Agent 5.72 分，蒸馏体 8.48 分（维度：长度、结构、证据、信息密度） || 依据内容特征评分：源 Agent 8.48 分，蒸馏体 5.72 分（维度：长度、结构、证据、信息密度）",
+    "依据内容特征评分：源 Agent 5.71 分，蒸馏体 8.47 分（维度：长度、结构、证据、信息密度） || 依据内容特征评分：源 Agent 8.47 分，蒸馏体 5.71 分（维度：长度、结构、证据、信息密度）",
+    "依据内容特征评分：源 Agent 5.71 分，蒸馏体 8.47 分（维度：长度、结构、证据、信息密度） || 依据内容特征评分：源 Agent 8.47 分，蒸馏体 5.71 分（维度：长度、结构、证据、信息密度）"
+  ],
+  "evolution_notes": [],
+  "baseline_kind": "source_prompt",
+  "baseline_comparable": true,
+  "baseline_note": "取自源材料，共 1 条 prompt 候选中最长的一条（154 字符）",
+  "arena_cases": 6,
+  "contaminated_cases": 0,
+  "debiased_cases": 6,
+  "trust_note": "裁判与作答为同一模型（gpt-4o-mini），评分可能受自偏好影响：模型倾向于给自己或同族模型的输出打高分。这种偏差作用于每一个用例，不会随样本增加抵消。本次胜负不足以支撑「更强」结论；若要得到可采信的结论，请把裁判配置为另一个模型（OMEGAFORGE_MODEL_JUDGE）。",
+  "question_source": "llm",
+  "answer_model": "gpt-4o-mini",
+  "judge_model": "gpt-4o-mini",
+  "question_model": "gpt-4o-mini",
+  "rubric_source": "llm",
+  "best_generation": 1,
+  "generations_run": 1,
+  "rolled_back": false,
+  "ablation": {},
+  "eval_set_source": "generated",
+  "eval_set_cases": 6,
+  "eval_set_fingerprint": "e43cd6cf3b079749",
+  "claim_valid": false,
+  "self_certified": true,
+  "exam_self_authored": true
+}
+
+— genome genes —
+persona_genes: ['meticulous', 'research', 'assistant', 'goal', 'topic']
+tool_genes: ['web_search(ctx)']
+workflow_genes: ['search']
+upgrade_genes: ['enforce: ground every claim', 'enforce: stay within scope', 'self-check output completeness before replying']
+ ✅ 8.2 omegaforge report
+127.0.0.1 - - [03/Oct/2026 17:18:43] "GET /api/status HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:43] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:44] "POST /api/distill HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:44] "GET /api/jobs/99f1895d41b2 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:45] "GET /api/jobs/99f1895d41b2 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:45] "GET /api/jobs/99f1895d41b2 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:45] "GET /api/jobs/99f1895d41b2 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:46] "GET /api/jobs/99f1895d41b2 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:46] "GET /api/jobs/99f1895d41b2 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:47] "GET /api/jobs/99f1895d41b2 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:47] "GET /api/jobs/99f1895d41b2 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:47] "GET /api/jobs/99f1895d41b2 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 17:18:47] "GET /api/jobs/nope HTTP/1.1" 404 -
+127.0.0.1 - - [03/Oct/2026 17:18:47] "POST /api/distill HTTP/1.1" 400 -
+127.0.0.1 - - [03/Oct/2026 17:18:47] "POST /api/distill HTTP/1.1" 400 -
+127.0.0.1 - - [03/Oct/2026 17:18:47] "GET /api/none HTTP/1.1" 404 -
+
+ Ω OMEGAFORGE — distill any agent. forge it stronger. spend less.
+ ────────────────────────────────────────────────────────────────
+
+⚠ 当前未配置模型服务，处于演示模式：结果不来自真实模型。请在设置页填写接口地址与密钥后重试。
+
+agent : Sample Agent Demo
+ok    : True   tokens: 164   steps: llm:0
+──────────────────────────────────────────────────
+针对「Research something」的分析：
+
+## 分析
+- 要点一：核心结论，基于可核查来源
+- 要点二：主要依据，见 arXiv:2401.00001
+- 要点三：边界情况与风险提示
+
+## 结论
+综上，Research something已达成；若输入不完整则按降级路径处理。
+
+## 来源
+- https://arxiv.org/abs/2401.00001 (2024)
+
+ ✅ 8.3 omegaforge run
+
+◆ 9. Studio Server API
+ ✅ 9.1 GET /api/status
+ ✅ 9.2 GET / 仅返回存活探测（不托管界面）
+ ✅ 9.3 POST /api/distill → job done（含 genome/verdict）
+ ✅ 9.4 未知 job → 404
+ ✅ 9.5 坏 JSON → 400
+ ✅ 9.6 缺 source → 400
+ ✅ 9.7 未知路径 → 404
+
+════════════════════════════════════════════════════════════
+审计结果: 55/55 PASS
+全部功能逐项验证通过 ✅

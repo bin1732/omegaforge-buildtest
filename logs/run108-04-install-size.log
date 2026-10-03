@@ -1,0 +1,12 @@
+installed_files=103
+installed_MB=311
+--- 安装包（压缩后） ---
+-rwxr-xr-x 1 runneradmin 197121 186692899 Oct  3 17:29 src-tauri/target/release/bundle/nsis/OmegaForge Studio_0.1.0_x64-setup.exe
+--- 关键布局 ---
+total 7128
+drwxr-xr-x 1 runneradmin 197121       0 Oct  3 17:30 .
+drwxr-xr-x 1 runneradmin 197121       0 Oct  3 17:29 ..
+drwxr-xr-x 1 runneradmin 197121       0 Oct  3 17:30 _internal
+-rwxr-xr-x 1 runneradmin 197121 2498300 Oct  3 17:19 omegaforge-backend.exe
+-rwxr-xr-x 1 runneradmin 197121 4677120 Oct  3 17:27 omegaforge-studio.exe
+-rwxr-xr-x 1 runneradmin 197121   80477 Oct  3 17:31 uninstall.exe

@@ -1,0 +1,118 @@
+功能验收目标: C:\of_install  端口 8793
+后端已就绪，开始逐端点验收
+后端路由 46 个：功能级 27 条 / 契约级 21 条 / 未探测 0 个
+  [PASS] status               200  194B  /api/status
+  [PASS] usage                200  204B  /api/usage
+  [PASS] tools-permissions    200  69B  /api/tools/permissions
+  [PASS] tools-policy         200  1494B  /api/tools/policy
+  [PASS] tools-audit          200  15B  /api/tools/audit
+  [PASS] providers            200  4753B  /api/providers
+  [PASS] providers-models     200  110B  /api/providers/models?name=openai
+  [PASS] personas             200  30B  /api/personas
+  [PASS] conversations        200  21B  /api/conversations
+  [PASS] kb-list              200  24B  /api/kb/list
+  [PASS] wiki-list            200  13B  /api/wiki/list
+  [PASS] tasks-list           200  61B  /api/tasks/list
+  [PASS] skills-list          200  14B  /api/skills/list
+  [PASS] runs                 200  12B  /api/runs
+  [PASS] voice-status         200  226B  /api/voice/status
+  [PASS] kb-add               200  20B  /api/kb/add
+  [PASS] kb-search            200  106B  /api/kb/search
+  [PASS] kb-list-after        200  134B  /api/kb/list
+  [PASS] wiki-save            200  18B  /api/wiki/save
+  [PASS] wiki-page            200  85B  /api/wiki/page?slug=verify
+  [PASS] tasks-add            200  112B  /api/tasks/add
+  [PASS] tasks-done           200  19B  /api/tasks/done
+  [PASS] tasks-done-list      200  186B  /api/tasks/list?scope=done
+  [PASS] memory-remember      200  20B  /api/memory/remember
+  [PASS] memory-recall        200  115B  /api/memory/recall
+  [PASS] conversations-new    200  152B  /api/conversations/new
+  [PASS] conversations-after  200  123B  /api/conversations
+--- 第二轮复用（写入第二遍 + 删除，验累加与真删除） ---
+  [PASS] kb-add-2             200  20B  /api/kb/add
+  [PASS] kb-list-2            200  480B  /api/kb/list
+  [PASS] kb-list-2b           200  480B  /api/kb/list
+  [PASS] kb-delete-2          200  17B  /api/kb/delete
+  [PASS] kb-list-after-del    200  368B  /api/kb/list
+  [PASS] kb-list-after-del-b  200  368B  /api/kb/list
+  [PASS] wiki-save-2          200  19B  /api/wiki/save
+  [PASS] wiki-list-2          200  113B  /api/wiki/list
+  [PASS] wiki-list-2b         200  113B  /api/wiki/list
+  [PASS] wiki-delete-2        200  17B  /api/wiki/delete
+  [PASS] wiki-list-after-del  200  61B  /api/wiki/list
+  [PASS] wiki-list-after-del-b 200  61B  /api/wiki/list
+  [PASS] tasks-add-2          200  112B  /api/tasks/add
+  [PASS] tasks-list-2         200  186B  /api/tasks/list?scope=done
+  [PASS] tasks-list-2b        200  173B  /api/tasks/list
+  [PASS] tasks-delete-2       200  17B  /api/tasks/delete
+  [PASS] tasks-list-after-del 200  186B  /api/tasks/list?scope=done
+  [PASS] tasks-list-after-del-b 200  61B  /api/tasks/list
+--- 核心流水线（离线真跑：蒸馏 → 基因组 → 报告 → 比对） ---
+  [PASS] status-离线态           mock_mode=True
+  [PASS] distill-A            job=82661c8cde59 (200)
+  [PASS] job-A-完成             终态=done
+  [PASS] genome-A-非空          提示词 462 字 / 基因 8 条
+  [PASS] report-A-有分          final_score=8.796000000000001
+  [PASS] distill-B            job=05fc18323d9c (200)
+  [PASS] job-B-完成             终态=done
+  [PASS] genome-B-非空          提示词 458 字 / 基因 9 条
+  [PASS] report-B-有分          final_score=8.802
+  [PASS] genome-随输入变化         543bfddd23a0 vs e309003c6741
+  [PASS] report-分数随输入变化       8.796 vs 8.802
+  [PASS] compare-真实产物         comparable=False prev=8.796000000000001 curr=8.802
+  [PASS] compare-拒绝时给出理由      comparable=False reason='两次用的是不同的评测集（指纹 396ebb89 vs 09dc576b），分数不可比'
+  [PASS] runs-含本次任务           2 个任务编号
+  [PASS] chat-拿到回复            23 字
+--- 真实使用两次（技能 / 会话 / 工具：此前只发过空入参） ---
+  [PASS] 会话-新建甲                 id=160894ff17 (200)
+  [PASS] 会话-新建乙                 id=74c1f03355 (200)
+  [PASS] 会话-两条都在                两个编号不同
+  [PASS] 会话-列表含两条               (200)
+  [PASS] 会话-切换模型                (200)
+  [PASS] 会话-删除乙                 (200)
+  [PASS] 会话-删后只剩甲               (200)
+  [PASS] 技能-安装                  (200)
+  [PASS] 技能-列表含它                (200)
+  [PASS] 技能-调用第一次               上下文已渲染
+  [PASS] 技能-调用第二次               上下文已渲染
+  [PASS] 技能-两次结果不同              随上下文变化
+  [PASS] 技能-覆盖安装                (200)
+  [PASS] 技能-覆盖后仍在               (200)
+  [PASS] 能力-开启文件                (200) {'terminal': False, 'fs': True, 'web_fetch': False}
+  [PASS] 工具-真实执行首次              items=13
+  [PASS] 工具-真实执行二次              items=13
+  [PASS] 权限级别-用标识               (200)
+  [PASS] 权限级别-用中文名              照报错填中文名也必须能设，否则用户重试多少次都失败
+  [PASS] 语音-内置就绪                asr缺=[] 库=True tts缺=[] 库=True
+  [PASS] 语音-合成首次                276524 字节 / 3.13 秒
+  [PASS] 语音-合成二次                260140 字节 / 2.95 秒
+  [PASS] 语音-两次产物不同              随文本变化；相同说明固定返回同一段
+  [PASS] 语音-识别闭环                (200) 识别结果：'HI JOVI'
+--- 契约级（无法跑完整功能，但必须验契约还在） ---
+  [PASS] distill              400  契约在  /api/distill
+  [PASS] chat                 400  契约在  /api/chat
+  [PASS] chat-stream          400  契约在  /api/chat/stream
+  [PASS] compare              400  契约在  /api/compare
+  [PASS] jobs                 404  契约在  /api/jobs/__verify__
+  [PASS] genome               404  契约在  /api/genome/__verify__
+  [PASS] report               404  契约在  /api/report/__verify__
+  [PASS] conversations-delete 400  契约在  /api/conversations/delete
+  [PASS] conversations-model  400  契约在  /api/conversations/model
+  [PASS] voice-tts            400  契约在  /api/voice/tts
+  [PASS] voice-asr            400  契约在  /api/voice/asr
+  [PASS] voice-models-install 400  契约在  /api/voice/models/install
+  [PASS] voice-models-progress 400  契约在  /api/voice/models/progress
+  [PASS] tools-exec           400  契约在  /api/tools/exec
+  [PASS] kb-delete            400  契约在  /api/kb/delete
+  [PASS] wiki-delete          400  契约在  /api/wiki/delete
+  [PASS] tasks-delete         400  契约在  /api/tasks/delete
+  [PASS] skills-install       400  契约在  /api/skills/install
+  [PASS] skills-invoke        400  契约在  /api/skills/invoke
+  [PASS] providers-apply      400  契约在  /api/providers/apply
+  [PASS] providers-test       400  契约在  /api/providers/test
+--- 重启后仍在（关掉应用再打开） ---
+  [PASS] kb-after-restart     200  486B  /api/kb/list
+  [PASS] wiki-after-restart   200  85B  /api/wiki/page?slug=verify
+  [PASS] memory-after-restart 200  115B  /api/memory/recall
+  [PASS] tasks-after-restart  200  186B  /api/tasks/list?scope=done
+=== 功能验收 109/109 通过（另有 0 个端点未被任何步骤探测） ===

@@ -1,0 +1,19 @@
+语音模型：已链接 src-tauri/_internal/models -> /tmp/journey-full-home/models
+  tts: 可用  (C:/Users/RUNNER~1/AppData/Local/Temp/journey-full-home\models)
+  asr: 可用  (C:/Users/RUNNER~1/AppData/Local/Temp/journey-full-home\models)
+backend=200 frontend=200
+{"event":"step","name":"知识库·检索命中","ok":false,"detail":"无法连接到本机服务，请确认应用已正常启动 无法连接到本机服务，请确认应用已正常启动 检索 重置 知识库 0 记忆 词条 0 新增条目 标题与内容均为必填 添加 条目列表 共 0 条 暂无条目 添加后可被检索与引用。"}
+{"event":"step","name":"知识库·检索不命中时不显示别的内容","ok":true,"detail":"已排除"}
+{"event":"step","name":"记忆·两条并存（非覆盖）","ok":false,"detail":"无法连接到本机服务，请确认应用已正常启动 检索 重置 知识库 0 记忆 词条 0 记住一条 记忆用于长期记住事实，会参与后续检索 记住 检索 暂无记忆 点上方检索可拉取已有记忆。"}
+{"event":"step","name":"记忆·检索命中","ok":false,"detail":"无法连接到本机服务，请确认应用已正常启动 无法连接到本机服务，请确认应用已正常启动 检索 重置 知识库 0 记忆 词条 0 记住一条 记忆用于长期记住事实，会参与后续检索 记住 检索 暂无记忆 点上方检索可拉取已有记忆。"}
+{"event":"step","name":"对话·新建两个会话（非覆盖）","ok":false,"detail":"共 0 条"}
+{"event":"step","name":"对话·删除会话有入口","ok":false,"detail":"没有可删的条目"}
+{"event":"step","name":"对话·删除后少一条","ok":false,"detail":"删前 0 条 → 删后 0 条"}
+{"event":"step","name":"设置·供应商下拉有值","ok":false,"detail":""}
+{"event":"step","name":"设置·语音面板有合成与识别状态","ok":true,"detail":"无法连接到本机服务，请确认应用已正常启动 模型供应商 当前生效：未设置 正在加载选项 API 密钥 应用 测试连接 预算 预算硬熔断，超出即停止 正在加载预算 语音 离线合成与识别。模型需单独放置，未就绪时如实显示原因。 合成 不可用 识别 不可用 一键安装模型 朗读 试听 识别音频文件（WAV） "}
+{"event":"step","name":"设置·语音合成已就绪（内置模型）","ok":true,"detail":"可用"}
+{"event":"step","name":"设置·语音合成第一次出音频","ok":false,"detail":"base64 长度 0"}
+{"event":"step","name":"设置·语音合成第二次出音频","ok":false,"detail":"base64 长度 0"}
+{"event":"step","name":"设置·语音两次合成结果不同（非恒定）","ok":false,"detail":"长度 0 vs 0"}
+{"event":"step","name":"控制台无报错","ok":false,"detail":"Failed to load resource: net::ERR_CONNECTION_REFUSED | Failed to load resource: net::ERR_CONNECTION_REFUSED | Failed to load resource: net::ERR_CONNECTION_REFUSED"}
+{"event":"done","fail":11,"steps":14}

@@ -1,0 +1,20 @@
+✅ test_budget_hard_stop passed
+✅ test_envelope_validation passed
+[DistillEngine] 对照组：源 Agent 原始提示词（154 字符）
+[DistillEngine] 正在解析源材料，提取 Agent 的能力结构
+[DistillEngine] 正在把能力结构压缩为可继承的基因组
+[DistillEngine] 正在把基因组合成为可运行的 Agent 提示词
+[DistillEngine] 正在生成用于对照评测的考题
+[DistillEngine]   第 1 轮 · 用例 c1：源 Agent 5.7 分，蒸馏体 8.8 分
+[DistillEngine]   第 1 轮 · 用例 c2：源 Agent 6.1 分，蒸馏体 8.8 分
+[DistillEngine]   第 1 轮 · 用例 c3：源 Agent 5.7 分，蒸馏体 8.8 分
+[DistillEngine]   第 1 轮 · 用例 c4：源 Agent 5.7 分，蒸馏体 8.8 分
+[DistillEngine]   第 1 轮 · 用例 c5：源 Agent 5.7 分，蒸馏体 8.8 分
+[DistillEngine]   第 1 轮 · 用例 c6：源 Agent 5.7 分，蒸馏体 8.8 分
+[DistillEngine]   注意：考题与评分标准由被测方自己生成，换裁判模型也绕不开，当前结论不作为「更强」的依据
+[DistillEngine]   注意：裁判与作答为同一模型（gpt-4o-mini），当前结论属自我评分，不作为「更强」的依据
+[DistillEngine] 蒸馏完成（裁判与作答为同一模型，当前结论属自我评分，本次胜负仅供参考）：蒸馏体 8.82 分，对照 5.78 分
+ agent answer head: 针对「Research: impact of EU AI Act on SMEs」的分析：  ## 分析 - 要点一：核心结论，基于可核查来源 - 要点二：主要依据，见 arXiv
+✅ test_full_pipeline passed
+
+ALL TESTS PASSED (mock mode, offline)

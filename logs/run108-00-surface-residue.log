@@ -1,0 +1,7 @@
+已确认豁免 2 处（有书面理由，不阻断）：
+  [本机回环地址] lib\api.ts:8  ← sidecar 只监听 127.0.0.1，属设计内安全边界
+      * 边界：后端由 Tauri 以 sidecar 方式托管，只监听 127.0.0.1。
+  [本机回环地址] lib\api.ts:11  ← sidecar 只监听 127.0.0.1，属设计内安全边界
+      const DEFAULT_BASE = 'http://127.0.0.1:8787'
+
+表层残留扫描通过 ✓（frontend/src）

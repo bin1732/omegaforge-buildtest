@@ -1,0 +1,77 @@
+168 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.8
+168 INFO: Python: 3.11.9
+174 INFO: Platform: Windows-10-10.0.26100-SP0
+176 INFO: Python environment: C:\hostedtoolcache\windows\Python\3.11.9\x64
+176 INFO: wrote D:\a\omegaforge-buildtest\omegaforge-buildtest\build\omegaforge-backend.spec
+178 INFO: Removing temporary files and cleaning cache in C:\Users\runneradmin\AppData\Local\pyinstaller
+395 INFO: Module search paths (PYTHONPATH):
+['D:\\a\\omegaforge-buildtest\\omegaforge-buildtest',
+ 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python311.zip',
+ 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\DLLs',
+ 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\Lib',
+ 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64',
+ 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\Lib\\site-packages',
+ 'D:\\a\\omegaforge-buildtest\\omegaforge-buildtest\\scripts',
+ 'D:\\a\\omegaforge-buildtest\\omegaforge-buildtest']
+554 INFO: Appending 'binaries' from .spec
+554 INFO: Appending 'datas' from .spec
+556 INFO: checking Analysis
+556 INFO: Building Analysis because Analysis-00.toc is non existent
+556 INFO: Looking for Python shared library...
+556 INFO: Using Python shared library: C:\hostedtoolcache\windows\Python\3.11.9\x64\python311.dll
+556 INFO: Running Analysis Analysis-00.toc
+556 INFO: Target bytecode optimization level: 0
+556 INFO: Initializing module dependency graph...
+556 INFO: Initializing module graph hook caches...
+570 INFO: Analyzing modules for base_library.zip ...
+1045 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\Lib\\site-packages\\PyInstaller\\hooks'
+1567 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\Lib\\site-packages\\PyInstaller\\hooks'
+2805 INFO: Processing standard module hook 'hook-math.py' from 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\Lib\\site-packages\\PyInstaller\\hooks'
+2892 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\Lib\\site-packages\\PyInstaller\\hooks'
+4316 INFO: Caching module dependency graph...
+4345 INFO: Analyzing D:\a\omegaforge-buildtest\omegaforge-buildtest\scripts\sidecar_main.py
+4905 INFO: Processing standard module hook 'hook-platform.py' from 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\Lib\\site-packages\\PyInstaller\\hooks'
+5198 INFO: Analyzing hidden import 'sherpa_onnx.__main__'
+5200 INFO: Analyzing hidden import 'sherpa_onnx.cli'
+5202 INFO: Processing module hooks (post-graph stage)...
+5208 INFO: Performing binary vs. data reclassification (30 entries)
+5212 INFO: Looking for ctypes DLLs
+5220 INFO: Analyzing run-time hooks ...
+5220 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+5226 INFO: Creating base_library.zip...
+5238 INFO: Looking for dynamic libraries
+5336 INFO: Extra DLL search directories (AddDllDirectory): []
+5336 INFO: Extra DLL search directories (PATH): []
+6006 INFO: Warnings written to D:\a\omegaforge-buildtest\omegaforge-buildtest\build\sidecar\omegaforge-backend\warn-omegaforge-backend.txt
+6022 INFO: Graph cross-reference written to D:\a\omegaforge-buildtest\omegaforge-buildtest\build\sidecar\omegaforge-backend\xref-omegaforge-backend.html
+6036 INFO: checking PYZ
+6036 INFO: Building PYZ because PYZ-00.toc is non existent
+6036 INFO: Building PYZ (ZlibArchive) D:\a\omegaforge-buildtest\omegaforge-buildtest\build\sidecar\omegaforge-backend\PYZ-00.pyz
+6220 INFO: Building PYZ (ZlibArchive) D:\a\omegaforge-buildtest\omegaforge-buildtest\build\sidecar\omegaforge-backend\PYZ-00.pyz completed successfully.
+6238 INFO: checking PKG
+6238 INFO: Building PKG because PKG-00.toc is non existent
+6238 INFO: Building PKG (CArchive) omegaforge-backend.pkg
+6248 INFO: Building PKG (CArchive) omegaforge-backend.pkg completed successfully.
+6248 INFO: Bootloader C:\hostedtoolcache\windows\Python\3.11.9\x64\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+6248 INFO: checking EXE
+6248 INFO: Building EXE because EXE-00.toc is non existent
+6248 INFO: Building EXE from EXE-00.toc
+6248 INFO: Copying bootloader EXE to D:\a\omegaforge-buildtest\omegaforge-buildtest\build\sidecar\omegaforge-backend\omegaforge-backend.exe
+6250 INFO: Copying icon to EXE
+6252 INFO: Copying 0 resources to EXE
+6252 INFO: Embedding manifest in EXE
+6254 INFO: Appending PKG archive to EXE
+6256 INFO: Fixing EXE headers
+6306 INFO: Building EXE from EXE-00.toc completed successfully.
+6307 INFO: checking COLLECT
+6307 INFO: Building COLLECT because COLLECT-00.toc is non existent
+6308 INFO: Building COLLECT COLLECT-00.toc
+6630 INFO: Building COLLECT COLLECT-00.toc completed successfully.
+6632 INFO: Build complete! The results are available in: D:\a\omegaforge-buildtest\omegaforge-buildtest\dist\sidecar
+[voice-assets] asr: 199056205 字节 / 4 个文件 -> D:\a\omegaforge-buildtest\omegaforge-buildtest\src-tauri\_internal\models\asr-zipformer-zh-en
+[voice-assets] tts: 71954439 字节 / 8 个文件 -> D:\a\omegaforge-buildtest\omegaforge-buildtest\src-tauri\_internal\models\vits-melo-tts-zh-en
+[voice-assets] 清单 -> D:\a\omegaforge-buildtest\omegaforge-buildtest\src-tauri\_internal\models\voice_manifest.json
+$ C:\hostedtoolcache\windows\Python\3.11.9\x64\python.exe -m PyInstaller --onedir --console --noconfirm --clean --name omegaforge-backend --distpath D:\a\omegaforge-buildtest\omegaforge-buildtest\dist\sidecar --workpath D:\a\omegaforge-buildtest\omegaforge-buildtest\build\sidecar --specpath D:\a\omegaforge-buildtest\omegaforge-buildtest\build --paths D:\a\omegaforge-buildtest\omegaforge-buildtest --exclude-module PySide6 --exclude-module tkinter --exclude-module matplotlib --collect-all sherpa_onnx D:\a\omegaforge-buildtest\omegaforge-buildtest\scripts\sidecar_main.py
+sidecar -> D:\a\omegaforge-buildtest\omegaforge-buildtest\src-tauri\binaries\omegaforge-backend-x86_64-pc-windows-msvc.exe
+_internal -> D:\a\omegaforge-buildtest\omegaforge-buildtest\src-tauri\_internal
+$ C:\hostedtoolcache\windows\Python\3.11.9\x64\python.exe D:\a\omegaforge-buildtest\omegaforge-buildtest\scripts\fetch_voice_assets.py --dest D:\a\omegaforge-buildtest\omegaforge-buildtest\src-tauri\_internal\models

@@ -1,0 +1,59 @@
+........................................................................ [  4%]
+........................................................................ [  9%]
+........................................................................ [ 14%]
+........................................................................ [ 19%]
+........................................................................ [ 24%]
+........................................................................ [ 29%]
+........................................................................ [ 34%]
+........................................................................ [ 39%]
+........................................................................ [ 44%]
+........................................................................ [ 49%]
+.................................................................... [ 54%]
+.............................................................................................. [ 61%]
+........................................................................ [ 66%]
+........................................................................ [ 71%]
+........................................................................ [ 75%]
+................................................................................................................ [ 83%]
+........................................................................ [ 88%]
+........................................................................ [ 93%]
+........................................................................ [ 98%]
+...................                                                      [100%]
+============================== warnings summary ===============================
+tests/test_job_thread_terminal.py::test_error_handler_failure_still_lands_terminal
+  C:\hostedtoolcache\windows\Python\3.11.9\x64\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-1402 (_run_job)
+  
+  Traceback (most recent call last):
+    File "D:\a\omegaforge-buildtest\omegaforge-buildtest\omegaforge\server.py", line 136, in _run_job
+      genome, report = engine.distill(source, output_dir=out_dir,
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "D:\a\omegaforge-buildtest\omegaforge-buildtest\omegaforge\distill\engine.py", line 1440, in distill
+      sig = loader.load(source)
+            ^^^^^^^^^^^^^^^^^^^
+    File "D:\a\omegaforge-buildtest\omegaforge-buildtest\omegaforge\distill\loader.py", line 183, in load
+      raise UserError(
+  omegaforge.core.errors.UserError: 这段内容太短或缺少指令，无法识别为有效的 Agent 提示词，请补充完整后重试
+  
+  During handling of the above exception, another exception occurred:
+  
+  Traceback (most recent call last):
+    File "C:\hostedtoolcache\windows\Python\3.11.9\x64\Lib\threading.py", line 1045, in _bootstrap_inner
+      self.run()
+    File "C:\hostedtoolcache\windows\Python\3.11.9\x64\Lib\threading.py", line 982, in run
+      self._target(*self._args, **self._kwargs)
+    File "D:\a\omegaforge-buildtest\omegaforge-buildtest\omegaforge\server.py", line 167, in _run_job
+      msg = user_error(e, "distill.run_job")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "D:\a\omegaforge-buildtest\omegaforge-buildtest\tests\test_job_thread_terminal.py", line 87, in bad_user_error
+      raise RuntimeError("错误处理自身失败")
+  RuntimeError: 错误处理自身失败
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+tests/test_pixels_per_page.py: 19 warnings
+  D:\a\omegaforge-buildtest\omegaforge-buildtest\scripts\verify_pixel_render.py:91: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    for px in small.getdata():
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1445 passed, 20 warnings, 158 subtests passed in 213.19s (0:03:33)

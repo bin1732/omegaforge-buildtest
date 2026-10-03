@@ -1,0 +1,20 @@
+export OF_JOURNEY_HOME='C:\Users\RUNNER~1\AppData\Local\Temp\ofjourney-cm0mt1cv\home'
+export OF_SKILL_A='C:\Users\RUNNER~1\AppData\Local\Temp\ofjourney-cm0mt1cv\jskill-a'
+export OF_SKILL_B='C:\Users\RUNNER~1\AppData\Local\Temp\ofjourney-cm0mt1cv\jskill-b'
+export OF_JOURNEY_BASE='C:\Users\RUNNER~1\AppData\Local\Temp\ofjourney-cm0mt1cv'
+backend=200 frontend=200
+{"event":"step","name":"蒸馏·第一次真完成","ok":true,"detail":"蒸馏工坊 把源 Agent 的能力提炼成更省 Token 的蒸馏体 源 Agent 提示词 评测任务 模型（只读） gpt-4o-mini 如需更换，请在「模型供应商」页切换 预算上限（Token） 开始蒸馏 运行进度 已完成 1. 摄入 2. 抽取 3. 压缩 4. 合成 5. 评测生成 6. 竞技 7. 收尾 评测"}
+{"event":"step","name":"蒸馏·第二次真完成","ok":true,"detail":"蒸馏工坊 把源 Agent 的能力提炼成更省 Token 的蒸馏体 源 Agent 提示词 评测任务 模型（只读） gpt-4o-mini 如需更换，请在「模型供应商」页切换 预算上限（Token） 开始蒸馏 运行进度 已完成 1. 摄入 2. 抽取 3. 压缩 4. 合成 5. 评测生成 6. 竞技 7. 收尾 评测"}
+{"event":"step","name":"蒸馏·两次产物不同（非恒定）","ok":true,"detail":"两次报告文本不同"}
+{"event":"step","name":"运行记录·至少有两条","ok":true,"detail":"条目数=2；运行记录 刷新 c227fccdd5b3 已完成 设为基准 用鸡蛋和番茄给出一道十分钟完成的菜 2026/10/3 17:21:42 c8dd5fef691a 已完成 设为基准 检索最近关于检索增强生成的论文并列出五篇 2026/10/3 "}
+{"event":"step","name":"运行记录·有「设为基准」入口","ok":true,"detail":"存在"}
+{"event":"step","name":"运行记录·比对真出结果","ok":true,"detail":"比对结果已渲染"}
+{"event":"step","name":"基因组·有可解剖的运行（非\"还没有\"）","ok":true,"detail":"基因组 解剖 Prompt 的结构组成 选择运行… 还没有解析结果 选择一次已完成的运行，即可查看它的能力基因组：人格设定、工具、约束与工作流。"}
+{"event":"step","name":"基因组·下拉能选到运行","ok":true,"detail":"选中 c227fccdd5b3 · 2026/10/3 17:21:42"}
+{"event":"step","name":"基因组·出结构解析","ok":true,"detail":"基因组 解剖 Prompt 的结构组成 c227fccdd5b3 · 2026/10/3 17:21:42 结构解析 c227fccdd5b3 名称 HomeChef 使命 HomeChef 你是一个家庭烹饪助手，负责按现有食材给出可执行的菜谱步骤。 源指纹 74562d7e7bbb 血统 distill-of:74562d7e7bbb 人格基因 HomeChef 工具基因 web_search("}
+{"event":"step","name":"竞技场·有可对照的运行（非\"还没有\"）","ok":true,"detail":"竞技场 蒸馏体与源 Agent 的同题对照裁决 选择一次运行 选择运行… 刷新列表 选择一次运行以查看对照结果 竞技场把蒸馏体与源 Agent 放在同一个任务上对照评分，给出裁决与理由。"}
+{"event":"step","name":"竞技场·下拉能选到运行","ok":true,"detail":"选中 c227fccdd5b3 · 2026/10/3 17:21:42"}
+{"event":"step","name":"竞技场·出对照报告","ok":true,"detail":"竞技场 蒸馏体与源 Agent 的同题对照裁决 选择一次运行 c227fccdd5b3 · 2026/10/3 17:21:42 双方持平 结论仅供参考 刷新列表 该结论不可用于宣称“更强” 裁判与作答为同一模型（gpt-4o-mini），评分可能受自偏好影响：模型倾向于给自己或同族模型的输出打高分。这种偏差作用于每一个用例，不会随样本增加抵消。本次胜负不足以支撑「更强」结论；若要得到可采信的结论"}
+{"event":"step","name":"用量·有真实非零数字","ok":true,"detail":"合计 6,594 累计消耗 Token 记录数 56 记账条目数 最耗时阶段 竞技·裁决 消耗最多的阶段 额度上限 已用 6,594 / 上限 400,000 · 剩余 393,406 已用 2% 时间分布 近 24 个区间，每区间 300 秒 按阶段统计 竞技·裁决 2,558 竞技·作答 2,513 蒸馏·出题 504 蒸馏·抽取 434 蒸馏·合成 339 蒸馏·压缩 246 按模型统计 g"}
+{"event":"step","name":"控制台无报错","ok":true,"detail":"无"}
+{"done":true,"fail":0,"fails":[]}
