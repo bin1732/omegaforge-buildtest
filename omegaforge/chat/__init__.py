@@ -1,1 +1,0 @@
-"""OmegaForge chat package."""
