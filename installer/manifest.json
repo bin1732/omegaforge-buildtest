@@ -1,7 +1,7 @@
 {
-  "run": "105",
-  "name": "installer.exe",
-  "bytes": 8969296,
-  "sha256": "e697b511299284a8f6a719ff88757bd7173fd2bbae6a4bd242fde6df2699627d",
-  "generated_at": "2026-10-03T16:30:07Z"
+  "run": "108",
+  "name": "OmegaForge Studio_0.1.0_x64-setup.exe",
+  "bytes": 186692899,
+  "sha256": "3e7c6dab0ef99f999e7c2cad0947c392203237b15757f4fba6e32f0c9b15ce80",
+  "generated_at": "2026-10-03T17:31:15Z"
 }
