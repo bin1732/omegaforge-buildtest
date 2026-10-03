@@ -7,7 +7,27 @@
    用法: node browser_pages.js <url> <outdir>
    输出: 每行一个 JSON（page 事件），末行 {"done":true,...}
 */
-const { chromium } = require('/usr/local/lib/node_modules/playwright');
+// 不写死绝对路径：本脚本只在沙盒的 Linux 上跑过，而 CI 的 runner 是 Windows，
+// 硬编码 '/usr/local/lib/node_modules/playwright' 在那里必然 require 失败，
+// 硬编码 '/usr/local/bin/chromium' 同样不存在。表现是"像素校验失败"，
+// 真因却是驱动定位——会把排查方向带到渲染本身。
+// 改为多候选 + 环境变量，与 user_journey.js 一致：playwright 模块由 node
+// 从脚本所在目录向上解析（CI 上装在仓库根），浏览器由 playwright 自己找，
+// 未显式指定 executablePath 时用它内置的那份。
+function loadPlaywright() {
+  const candidates = [
+    process.env.OF_PLAYWRIGHT,
+    '/usr/local/lib/node_modules/playwright',
+    'playwright',
+    'frontend/node_modules/playwright',
+    'node_modules/playwright',
+  ].filter(Boolean);
+  for (const c of candidates) {
+    try { return require(c); } catch (e) { /* 换下一个候选 */ }
+  }
+  throw new Error('找不到 playwright：已试 ' + candidates.join(', '));
+}
+const { chromium } = loadPlaywright();
 const fs = require('fs');
 const path = require('path');
 
@@ -15,7 +35,7 @@ const url = process.argv[2];
 const outdir = process.argv[3] || '/tmp/pageshot';
 fs.mkdirSync(outdir, { recursive: true });
 
-const EXEC = '/usr/local/bin/chromium';
+const EXEC = process.env.OF_CHROMIUM || undefined;
 
 (async () => {
   const browser = await chromium.launch({

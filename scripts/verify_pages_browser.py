@@ -36,7 +36,12 @@ FINGERPRINT_NAME = "dist_src.fingerprint"
 DRIVER = os.path.join(HERE, "browser_pages.js")
 sys.path.insert(0, HERE)
 from page_render_checks import evaluate  # noqa: E402
-CHROMIUM = "/usr/local/bin/chromium"
+# 不写死路径：CI 的 runner 是 Windows，'/usr/local/bin/chromium' 在那里不存在，
+# 于是下面那句"沙盒内找不到浏览器"会在每次构建上必然触发，报的还是一句
+# 把排查方向带去"去装浏览器"的话——真因是路径硬编码，不是缺浏览器。
+# 未显式指定时不要求文件存在：浏览器由 playwright 自己管理，找不到时
+# node 侧会抛出真实原因，本脚本负责把它原样带出来。
+CHROMIUM = os.environ.get("OF_CHROMIUM", "")
 
 EXPECTED_PAGES = [
     "蒸馏工坊", "对话", "知识库", "待办", "技能与人设",
@@ -218,8 +223,10 @@ def main(argv=None) -> int:
     shots_dir = args.shots
     os.makedirs(shots_dir, exist_ok=True)
 
-    if not os.path.isfile(CHROMIUM):
-        print("FAIL: 沙盒内找不到浏览器，逐页核查无从执行", file=sys.stderr)
+    # 只在显式指定了浏览器路径时才检查它存在；未指定时交给 playwright 定位，
+    # 那里的报错会指明真实原因（模块找不到 / 浏览器未安装）。
+    if CHROMIUM and not os.path.isfile(CHROMIUM):
+        print("FAIL: 指定的浏览器不存在：%s" % CHROMIUM, file=sys.stderr)
         return 1
 
     # 前端把后端地址写死在 8787，核查必须落在同一端口，
