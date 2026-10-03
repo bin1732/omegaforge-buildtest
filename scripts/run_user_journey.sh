@@ -66,7 +66,12 @@ print("夹具自检通过：两个技能包都含技能说明文件")
 PYCHECK
 HOME_DIR="$OF_JOURNEY_HOME"
 
-for f in "$BE_PID" "$FE_PID"; do
+# 三个旅程脚本共用同一组端口（后端 8787、静态服务 8899）。残留进程占住
+# 端口时这里绑不上，报出来的是"服务未就绪"——症状指向本段没起来，真因是
+# 别处的进程仍占着端口。所以启动前一并清掉全部六个 pid 文件。
+for f in "$BE_PID" "$FE_PID" \
+         "${TMPDIR:-/tmp}/journey-deep-be.pid" "${TMPDIR:-/tmp}/journey-deep-fe.pid" \
+         "${TMPDIR:-/tmp}/journey-full-be.pid" "${TMPDIR:-/tmp}/journey-full-fe.pid"; do
   if [ -f "$f" ]; then kill "$(cat "$f")" 2>/dev/null || true; rm -f "$f"; fi
 done
 sleep 1

@@ -26,8 +26,13 @@ HOME_DIR=${TMPDIR:-/tmp}/journey-full-home
 BE_PORT=8787
 FE_PORT=8899
 
+# 三个旅程脚本共用同一组端口（后端 8787、静态服务 8899）。前一段旅程的
+# 进程若没退干净，这里绑不上 8899，报出来的是"服务未就绪 frontend=000"
+# ——症状指向本段的前端没起来，真因是上一段的进程仍占着端口。所以每段
+# 启动前都要把全部六个 pid 文件一并清掉，只清自己的不够。
 for f in "$BE_PID" "$FE_PID" \
-         "${TMPDIR:-/tmp}/journey-be.pid" "${TMPDIR:-/tmp}/journey-deep-be.pid"; do
+         "${TMPDIR:-/tmp}/journey-be.pid" "${TMPDIR:-/tmp}/journey-fe.pid" \
+         "${TMPDIR:-/tmp}/journey-deep-be.pid" "${TMPDIR:-/tmp}/journey-deep-fe.pid"; do
   if [ -f "$f" ]; then kill "$(cat "$f")" 2>/dev/null || true; rm -f "$f"; fi
 done
 sleep 1

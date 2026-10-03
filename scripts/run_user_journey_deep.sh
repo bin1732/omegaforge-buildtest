@@ -15,6 +15,17 @@ DIST=frontend/dist
 BE_PID=${TMPDIR:-/tmp}/journey-deep-be.pid
 FE_PID=${TMPDIR:-/tmp}/journey-deep-fe.pid
 
+# 三个旅程脚本共用同一组端口（后端 8787、静态服务 8899）。前一段旅程的
+# 进程若没退干净，这里绑不上端口，报出来的是"服务未就绪"——症状指向本段
+# 没起来，真因是上一段的进程仍占着端口。所以启动前要一并清掉全部六个
+# pid 文件，只清自己的不够。
+for f in "$BE_PID" "$FE_PID" \
+         "${TMPDIR:-/tmp}/journey-be.pid" "${TMPDIR:-/tmp}/journey-fe.pid" \
+         "${TMPDIR:-/tmp}/journey-full-be.pid" "${TMPDIR:-/tmp}/journey-full-fe.pid"; do
+  if [ -f "$f" ]; then kill "$(cat "$f")" 2>/dev/null || true; rm -f "$f"; fi
+done
+sleep 1
+
 # 数据目录必须由 Python 生成并回传绝对路径：Git Bash 的 /tmp 与 Windows
 # 版 Python 看到的 /tmp 不是同一个地方。用 shell 的 /tmp 兜底时，
 # `rm -rf` 删的是 shell 那一侧，Python 建的目录其实没被删掉 ——
