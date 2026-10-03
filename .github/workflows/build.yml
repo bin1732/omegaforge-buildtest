@@ -228,6 +228,17 @@ jobs:
         shell: bash
         run: python scripts/check_softfail_steps.py
 
+      - name: Backend port candidates guard
+        shell: bash
+        run: python scripts/check_port_candidates.py --root .
+
+      # 端口退让的端到端校验：真的占住默认端口、真的起子进程、按候选顺序
+      # 真的探测。用替身记录"绑定了哪个端口"只能验到分支逻辑，验不到进程
+      # 起来之后是否真的可连；而占用不成立时若不判失败，本层会退化成恒真。
+      - name: Port fallback end-to-end guard
+        shell: bash
+        run: python scripts/verify_port_fallback.py --root .
+
       # ---- 1. 打包 Python 后端为 Tauri sidecar ----
       - name: Build Python sidecar
         shell: bash
@@ -667,6 +678,7 @@ jobs:
         shell: bash
         env:
           OF_PAT: ${{ secrets.OF_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set +e
           mkdir -p ci_diag

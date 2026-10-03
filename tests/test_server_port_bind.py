@@ -162,6 +162,84 @@ class PortBindTest(_Home, unittest.TestCase):
         self.assertLess(ready[0], kinds.index("serve"),
                         f"就绪声明不得晚于阻塞：{events}")
 
+    def test_default_port_falls_back_to_next_candidate(self) -> None:
+        """默认端口被占用时退到候选端口的下一个，并说明改动。
+
+        用户视角：上一次没退干净的残留进程占住默认端口，后端若直接退出，
+        界面只会反复显示"无法连接到本机服务"，使用者既退不掉占用程序也换
+        不了端口，应用等于不可用。用替身记录实际绑定的端口，避免真的进入
+        阻塞循环——否则用例会从"失败"变成"挂起"。
+        """
+        import builtins
+
+        import omegaforge.server as server_mod
+
+        bound: list[int] = []
+        printed: list[str] = []
+        real_cls = server_mod.ThreadingHTTPServer
+        real_watch = server_mod._start_uninstall_watch
+        real_print = builtins.print
+
+        class _Fake:
+            def __init__(self, addr, handler):
+                if addr[1] == server_mod.PORT_CANDIDATES[0]:
+                    raise OSError(98, "Address already in use")
+                bound.append(addr[1])
+
+            def serve_forever(self):
+                pass
+
+        builtins.print = lambda *a, **k: printed.append(" ".join(str(x) for x in a))
+        server_mod.ThreadingHTTPServer = _Fake         # type: ignore[assignment]
+        server_mod._start_uninstall_watch = lambda _h: None  # type: ignore[assignment]
+        self.addCleanup(setattr, builtins, "print", real_print)
+        self.addCleanup(setattr, server_mod, "ThreadingHTTPServer", real_cls)
+        self.addCleanup(setattr, server_mod, "_start_uninstall_watch", real_watch)
+        try:
+            server_mod.serve(host="127.0.0.1", port=server_mod.PORT_CANDIDATES[0])
+        except SystemExit as exc:                       # pragma: no cover
+            self.fail(f"默认端口被占用时应退到候选端口，实际退出：{exc}")
+
+        self.assertEqual(bound, [server_mod.PORT_CANDIDATES[1]],
+                         f"退让后必须落在下一个候选端口：{bound}")
+        joined = "\n".join(printed)
+        self.assertIn("被占用", joined, f"必须说明端口已被占用：{printed}")
+        self.assertIn(str(server_mod.PORT_CANDIDATES[1]), joined,
+                      f"必须点名实际使用的端口：{printed}")
+
+    def test_explicit_port_is_not_silently_replaced(self) -> None:
+        """显式指定的端口被占用时不得悄悄改用别的端口。
+
+        否则使用者要求换端口却拿到另一个端口，报错点名的端口与实际监听的
+        端口不一致，排查方向被带偏。
+        """
+        import builtins
+
+        import omegaforge.server as server_mod
+
+        real_cls = server_mod.ThreadingHTTPServer
+        real_watch = server_mod._start_uninstall_watch
+        real_print = builtins.print
+        printed: list[str] = []
+
+        class _AlwaysBusy:
+            def __init__(self, addr, handler):
+                raise OSError(98, "Address already in use")
+
+            def serve_forever(self):
+                pass
+
+        builtins.print = lambda *a, **k: printed.append(" ".join(str(x) for x in a))
+        server_mod.ThreadingHTTPServer = _AlwaysBusy    # type: ignore[assignment]
+        server_mod._start_uninstall_watch = lambda _h: None  # type: ignore[assignment]
+        self.addCleanup(setattr, builtins, "print", real_print)
+        self.addCleanup(setattr, server_mod, "ThreadingHTTPServer", real_cls)
+        self.addCleanup(setattr, server_mod, "_start_uninstall_watch", real_watch)
+        with self.assertRaises(SystemExit):
+            server_mod.serve(host="127.0.0.1", port=PORT)
+        self.assertNotIn("127.0.0.1", "\n".join(printed),
+                         f"未绑定成功时不得声明已就绪：{printed}")
+
     def test_error_text_separates_causes(self) -> None:
         """占用与权限不足必须给出不同的处置，且都点名端口。"""
         import errno as errno_mod

@@ -1278,18 +1278,52 @@ def _start_uninstall_watch(httpd: ThreadingHTTPServer,
     return t
 
 
+#: 后端可监听的端口候选（按顺序试探）。界面按同一组端口做发现，两边必须
+#: 一致，否则换端口后界面仍去连旧端口，症状会表现成"服务没启动"。
+PORT_CANDIDATES: tuple[int, ...] = (8787, 8788, 8789, 8790, 8791, 8792)
+
+
 def serve(host: str = "127.0.0.1", port: int = 8787) -> None:
     """启动本机服务。
 
     "已就绪"的声明必须晚于绑定成功：端口被占用时绑定会抛 OSError，
     若先声明后绑定，使用者会照着一个并没有在监听的地址反复排查。
+
+    端口被占用时向后试探候选端口，而不是直接退出：占用 8787 的常见来源
+    是上一次没退干净的本程序残留进程，此时界面只会显示"无法连接到本机
+    服务"，用户既退不掉占用程序也换不了端口，等于应用彻底不可用。换端口
+    后由界面按候选端口探测发现，两端都不再依赖单一端口。
+
+    仅默认端口享受这一退让；显式指定的端口被占用时必须报错退出。
     """
     configure_logging()
-    try:
-        httpd = ThreadingHTTPServer((host, port), Handler)
-    except OSError as exc:
-        raise SystemExit(port_bind_error_text(port, exc)) from exc
-    print(f"Ω OmegaForge Studio → http://{host}:{port}")
+    httpd = None
+    last_exc: OSError | None = None
+    # 只有默认端口才退到候选列表：命令行显式 --port 必须被严格尊重，否则
+    # 使用者要求换端口却拿到另一个端口，"换个端口启动"这条处置建议就无从
+    # 执行，且报错点名的端口与实际监听的端口不一致。
+    candidates = PORT_CANDIDATES if port == PORT_CANDIDATES[0] else (port,)
+    for candidate in candidates:
+        try:
+            httpd = ThreadingHTTPServer((host, candidate), Handler)
+        except OSError as exc:
+            last_exc = exc
+            continue
+        if candidate != port:
+            # 必须 flush：标准输出被外壳以管道接管时是块缓冲的，而端口
+            # 退让恰恰是"服务明明在跑、界面却连不上"时唯一能解释现状的
+            # 一行。等进程退出才出现，排查已经结束了。
+            print(f"端口 {port} 被占用，已改用 {candidate}", flush=True)
+        port = candidate
+        break
+    if httpd is None:
+        # 全部候选都被占用才算失败：此时确实起不来，必须给出可执行的处置
+        # 建议，而不是笼统说"服务未启动"。
+        raise SystemExit(
+            port_bind_error_text(port, last_exc) if last_exc
+            else f"候选端口 {list(PORT_CANDIDATES)} 均被占用，请退出占用程序后重试"
+        )
+    print(f"Ω OmegaForge Studio → http://{host}:{port}", flush=True)
     _start_uninstall_watch(httpd)
     httpd.serve_forever()
 

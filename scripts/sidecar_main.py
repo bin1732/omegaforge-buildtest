@@ -61,8 +61,11 @@ def main() -> int:
     from omegaforge.server import serve
 
     port = _port()
-    # 关键：立即 flush，让 Tauri 的健康检查与日志转发尽快拿到输出
-    print(f"[sidecar] starting on 127.0.0.1:{port}", flush=True)
+    # 关键：立即 flush，让 Tauri 的健康检查与日志转发尽快拿到输出。
+    # 这里是"首选端口"而非最终地址：端口被占用时 serve 会退到候选端口里的
+    # 下一个，并自行打印实际监听的地址。若此处写成"已监听"，两行日志的
+    # 端口不一致，读日志的人会以为是故障。
+    print(f"[sidecar] 首选端口 127.0.0.1:{port}", flush=True)
     try:
         serve(host="127.0.0.1", port=port)
     except KeyboardInterrupt:

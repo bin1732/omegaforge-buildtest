@@ -20,7 +20,14 @@ BE_PID=${TMPDIR:-/tmp}/journey-full-be.pid
 FE_PID=${TMPDIR:-/tmp}/journey-full-fe.pid
 HOME_DIR=${TMPDIR:-/tmp}/journey-full-home
 
-for f in "$BE_PID" "$FE_PID"; do
+# 后端端口必须落在前端 PORT_CANDIDATES 之内。两端不一致时后端其实活着、
+# 就绪检查也返回 200，而界面每个功能都报"无法连接到本机服务"——症状
+# 指向服务没起来，真因是端口对不上，排查方向完全相反。
+BE_PORT=8787
+FE_PORT=8899
+
+for f in "$BE_PID" "$FE_PID" \
+         "${TMPDIR:-/tmp}/journey-be.pid" "${TMPDIR:-/tmp}/journey-deep-be.pid"; do
   if [ -f "$f" ]; then kill "$(cat "$f")" 2>/dev/null || true; rm -f "$f"; fi
 done
 sleep 1
@@ -67,30 +74,36 @@ if [ ! -f "$DIST/index.html" ]; then
 fi
 
 OMEGAFORGE_ALLOWED_ORIGINS=localhost \
-  nohup "$PY" -m omegaforge.server --port 8788 > /tmp/journey-full-be.log 2>&1 &
+  nohup "$PY" -m omegaforge.server --port "$BE_PORT" > /tmp/journey-full-be.log 2>&1 &
 echo $! > "$BE_PID"
 
 cd "$DIST"
-nohup "$PY" -m http.server 8898 > /tmp/journey-full-fe.log 2>&1 &
+nohup "$PY" -m http.server "$FE_PORT" > /tmp/journey-full-fe.log 2>&1 &
 echo $! > "$FE_PID"
 cd - >/dev/null
 
 b=""; f=""
 for _ in $(seq 1 40); do
-  b=$(curl -s -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:8788/api/status || true)
-  f=$(curl -s -m 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:8898/ || true)
+  b=$(curl -s -m 2 -o /dev/null -w "%{http_code}" "http://127.0.0.1:$BE_PORT/api/status" || true)
+  f=$(curl -s -m 2 -o /dev/null -w "%{http_code}" "http://127.0.0.1:$FE_PORT/" || true)
   if [ "$b" = "200" ] && [ "$f" = "200" ]; then break; fi
   sleep 1
 done
 echo "backend=$b frontend=$f"
 if [ "$b" != "200" ] || [ "$f" != "200" ]; then
   echo "FAIL 服务未就绪（backend=$b frontend=$f）"
-  tail -5 /tmp/journey-full-be.log 2>/dev/null || true
+  tail -20 /tmp/journey-full-be.log 2>/dev/null || true
   exit 1
 fi
 
-node scripts/user_journey_full.js http://127.0.0.1:8898/
+node scripts/user_journey_full.js "http://127.0.0.1:$FE_PORT/"
 rc=$?
+
+# 后端日志必须一并留下：界面功能失败时只看到"无法连接到本机服务"，
+# 而后端是否崩过、崩在哪一行全在这个日志里。不落盘就只能靠猜。
+echo "---- 后端日志尾部 ----"
+tail -20 /tmp/journey-full-be.log 2>/dev/null || true
+echo "---- 后端日志结束 ----"
 
 for f in "$BE_PID" "$FE_PID"; do
   if [ -f "$f" ]; then kill "$(cat "$f")" 2>/dev/null || true; rm -f "$f"; fi

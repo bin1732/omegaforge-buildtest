@@ -10,9 +10,55 @@
 
 const DEFAULT_BASE = 'http://127.0.0.1:8787'
 
+/**
+ * 与后端可监听端口的候选列表一一对应。两边由一致性检查脚本比对，不得
+ * 单方面改动：列表不一致时后端换到新端口而界面仍去连旧端口，症状会
+ * 表现成"服务没启动"，排查方向完全相反。
+ */
+const PORT_CANDIDATES = [8787, 8788, 8789, 8790, 8791, 8792]
+
 /** 构建期可用 VITE_BACKEND_BASE 指定后端地址，未指定时用默认端口。 */
-const BASE: string =
-  (import.meta.env.VITE_BACKEND_BASE as string | undefined) || DEFAULT_BASE
+const CONFIGURED_BASE: string =
+  (import.meta.env.VITE_BACKEND_BASE as string | undefined) || ''
+
+let _resolvedBase: string | null = null
+let _resolving: Promise<string> | null = null
+
+function _probe(base: string, timeoutMs = 1200): Promise<boolean> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  return fetch(`${base}/api/status`, { signal: ctrl.signal })
+    .then((res) => res.ok)
+    .catch(() => false)
+    .finally(() => clearTimeout(timer))
+}
+
+/**
+ * 解析后端地址，只解析一次并缓存。
+ *
+ * 后端在端口被占用时会退到候选端口里的下一个。界面若始终把地址写死在
+ * 8787，就会出现"后端其实在跑、界面一律报连不上"的局面——用户看到的
+ * 只有一句"无法连接到本机服务，请确认应用已正常启动"，既退不掉占用
+ * 程序也换不了端口，应用等于不可用。这里按同一组候选端口做一次发现。
+ */
+async function resolveBase(): Promise<string> {
+  if (_resolvedBase) return _resolvedBase
+  if (!_resolving) {
+    _resolving = (async () => {
+      const first = CONFIGURED_BASE || DEFAULT_BASE
+      if (await _probe(first)) return (_resolvedBase = first)
+      for (const port of PORT_CANDIDATES) {
+        const base = `http://127.0.0.1:${port}`
+        if (base === first) continue
+        if (await _probe(base)) return (_resolvedBase = base)
+      }
+      // 全部不通时仍返回首选地址：后续请求会照常报"连不上"，但报的是
+      // 真实地址，不会再因为端口不一致而指向错误的原因。
+      return (_resolvedBase = first)
+    })()
+  }
+  return _resolving
+}
 
 /* ---------------- 基础请求层 ---------------- */
 
@@ -53,7 +99,8 @@ async function request<T>(
   try {
     let res: Response
     try {
-      res = await fetch(`${BASE}${path}`, { ...rest, signal: ctrl.signal })
+      const base = await resolveBase()
+      res = await fetch(`${base}${path}`, { ...rest, signal: ctrl.signal })
     } catch {
       // 两者都不会给出可展示的文案，落到兜底就只剩"请稍后重试"。
       // 但连不上本机服务时重试不会有帮助，必须按原因分别说清。
@@ -299,8 +346,9 @@ export function sendChat(p: ChatSendPayload) {
  * POST /api/chat/stream —— SSE 流式对话。
  * 返回底层 Response，由调用方读取 ReadableStream。
  */
-export function streamChat(p: ChatSendPayload) {
-  return fetch(`${BASE}/api/chat/stream`, {
+export async function streamChat(p: ChatSendPayload) {
+  const base = await resolveBase()
+  return fetch(`${base}/api/chat/stream`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(p),
