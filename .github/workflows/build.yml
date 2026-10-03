@@ -222,6 +222,12 @@ jobs:
         shell: bash
         run: python scripts/check_journey_fixture_export.py
 
+      # 软失败步骤写法守卫：没有 set +e 时，errexit 会吃掉 exit 0，
+      # 界面类失败会退化成硬失败，把后面四段真实证据全部 skipped。
+      - name: Soft-fail step guard
+        shell: bash
+        run: python scripts/check_softfail_steps.py
+
       # ---- 1. 打包 Python 后端为 Tauri sidecar ----
       - name: Build Python sidecar
         shell: bash
@@ -298,6 +304,20 @@ jobs:
           set -o pipefail
           npm run build 2>&1 | tee ../ci_diag/02-frontend-build.log
 
+      # ---- 把源码指纹写进产物 ----
+      #
+      # 为什么必须有这一步：逐页核查第一步就判"产物是否由当前源码构建"，
+      # 指纹缺失时它直接退出，像素校验随之报"无从执行"——run107 的三个
+      # 红点里有两个就是这么来的，而报错指向的是核查本身，真因却在构建。
+      # 必须在 vite 之后写入：vite 会清空 outDir，先写会被删掉。
+      - name: Record frontend source fingerprint
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 scripts/verify_pages_browser.py \
+            --dist frontend/dist --src frontend/src --record-fingerprint \
+            2>&1 | tee ci_diag/02a-fingerprint.log
+
       # ---- 人类用户旅程：像人一样在界面上操作 ----
       #
       # 为什么必须有这一步：接口级验收全绿，也会出现"用户点完成，条目消失
@@ -318,6 +338,10 @@ jobs:
           OF_JOURNEY_FIXTURE_ROOT: ${{ github.workspace }}/ci_diag/journey
         run: |
           set -o pipefail
+          # GitHub 的 bash 步骤默认带 -e：命令一失败 errexit 立刻终止脚本，
+          # 后面的 rc=$? 与 exit 0 根本执行不到，软失败就退化成硬失败，
+          # 后续步骤照样 skipped——恰恰是最需要后续证据的场景。
+          set +e
           mkdir -p ci_diag
           npm install --no-save playwright@1.49.1 2>&1 | tail -3
           npx playwright install chromium 2>&1 | tail -5
@@ -340,6 +364,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          set +e
           mkdir -p ci_diag
           python3 scripts/verify_pixels_per_page.py \
             --dist frontend/dist --shots ci_diag/shots 2>&1 \
@@ -352,6 +377,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          set +e
           mkdir -p ci_diag
           bash scripts/run_user_journey_deep.sh 2>&1 | tee ci_diag/02c-user-journey-deep.log
           rc=${PIPESTATUS[0]}
@@ -370,6 +396,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          set +e
           mkdir -p ci_diag
           bash scripts/run_user_journey_full.sh 2>&1 | tee ci_diag/02e-user-journey-full.log
           rc=${PIPESTATUS[0]}
